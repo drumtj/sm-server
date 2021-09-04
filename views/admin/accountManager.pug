@@ -1,0 +1,238 @@
+extends ../_layout/default.pug
+
+block append styles
+  style.
+    .account-money-input {
+      text-align: right;
+    }
+    .price {
+      color: yellow;
+      font-weight: 400;
+    }    
+    .table td, .table th {
+      text-align: center;   
+    }
+    .rm {
+      margin-right: 20px;
+    }
+
+block scripts
+  script(src="/js/admin/accountManager.js")
+
+block view  
+  .input-group.deposit-input-wrap.pre-hide
+    .input-group-prepend
+      .input-group-text
+        |출금액
+    input.form-control#depositInput(type="text")
+  
+  .fade-in.pre-hide#app
+    h1
+      span.rm [관리자] 계정관리
+      button.btn.btn-square.btn-vimeo(type="button" v-on:click="openAccountRegistModal")
+        svg.c-icon.mr-2
+          use(xlink:href="/vendors/@coreui/icons/svg/brand.svg#cib-addthis")
+        |계정등록
+    hr    
+    .card.account-form
+      .card-body
+        .form-group.row(v-for="form in forms")      
+          label.col-md-3.col-form-label(:for="form.key") {{form.name}}
+          .col-md-9(v-if="form.type=='text'")
+            input.form-control(v-on:change="update" :id="form.key" type="text" :name="form.key" :placeholder="form.placeholder?form.placeholder:''" :value="form.value")
+            span.help-block(v-if="form.help") {{form.help}}
+          .col-md-9(v-if="form.type=='number'")
+            .input-group
+              .input-group-prepend(v-if="form.prepend")
+                span.input-group-text(v-html="form.prepend")
+              input.form-control(v-on:change="update" :id="form.key" type="number" :name="form.key" :placeholder="form.placeholder?form.placeholder:''" :value="form.value")
+              .input-group-append(v-if="form.append")
+                span.input-group-text(v-html="form.append")
+            span.help-block(v-if="form.help") {{form.help}}
+          .col-md-9(v-else-if="form.type=='select'")
+            select.form-control(v-on:change="update" :id="form.key" :name="form.key")          
+              option(v-for="opt in form.list" :value="opt.value" :selected="opt.value == form.value" v-html="opt.name")
+            span.help-block(v-if="form.help") {{form.help}}
+          .col-md-9.col-form-label(v-else-if="form.type=='radio'")
+            .form-check(v-for="opt in form.list")
+              input.form-check-input(v-on:change="update" :id="form.key+'_'+opt.value" type="radio" :checked="opt.value == form.value" :value="opt.value" :name="form.key")
+              label.form-check-label(:for="form.key+'_'+opt.value") {{opt.name}}
+          .col-md-9.col-form-label(v-else-if="form.type=='checkbox'")
+            .form-check.checkbox(v-for="opt in form.list")
+              input.form-check-input(v-on:change="update" :id="form.key+'_'+opt.value" type="checkbox" :checked="form.value[opt.value]")
+              label.form-check-label(:for="form.key+'_'+opt.value") {{opt.name}}
+    
+    .row
+      .col-md
+        ul.nav.nav-tabs
+          li.nav-item
+            a.nav-link(href="#0" v-on:click="loadList(0)" :class="tab==0?'active':''") 등록완료
+          li.nav-item
+            a.nav-link(href="#1" v-on:click="loadChargedList(0)" :class="tab==1?'active':''") 충전완료
+          li.nav-item
+            a.nav-link(href="#2" v-on:click="loadUseList(0)" :class="tab==2?'active':''") 발급완료
+          //- li.nav-item
+            a.nav-link(href="#3" v-on:click="loadRequestList(0)" :class="tab==3?'active':''") 입/출금요청
+          li.nav-item
+            a.nav-link(href="#4" v-on:click="loadTrashList(0)" :class="tab==4?'active':''") 휴지통
+          li.nav-item(v-if="user.master")
+            a.nav-link(href="#5" v-on:click="loadRemoveList(0)" :class="tab==5?'active':''") 제거목록
+        .card
+          .card-header
+            div
+              span 계정 목록 ({{count}})
+              span(style="margin-left:10px")
+                .btn-group
+                  button.btn.btn-sm.btn-secondary(type="button" v-on:click="resetReload")
+                    |검색조건 초기화
+              span.float-right
+                .form-inline
+                  .form-group
+                    .input-group
+                      .input-group-prepend
+                        .input-group-text ID
+                      input.form-control.search-id(type="text" :value="searchId?searchId:''" v-on:change="changeSearchId")
+                  .form-group(v-if="tab!==5")
+                    .input-group
+                      .input-group-prepend
+                        .input-group-text 유저
+                      select.form-control.search-email(v-on:change="changeSearchEmail" :value="email?email:''")
+                        option(value="") --------
+                        option(v-if="!!user" v-for="user in users" :value="user.email") {{user.email}}
+                  .form-group
+                    button.btn.btn-primary(type="button" v-on:click="loadList(curPage, tab, {searchId, email})") 찾기
+          .card-body.table-responsive
+            table.table.table-sm.table-responsive-sm.table-striped.table-hover.table-bordered
+              thead
+                tr(v-if="tab==5&&user.master")
+                  th #
+                  th 등록번호
+                  th 국가
+                  th 아이디
+                  th 비밀번호
+                  th 계정등록일
+                  th 상태
+                  th 배팅
+                  th 살리기
+                tr(v-else)
+                  th #
+                  th 등록번호
+                  th 국가
+                  th 아이디
+                  th 비밀번호
+                  th 계정등록일
+                  th(v-if="tab==3") 출금요청일
+                  th 잔액
+                  //- th 충전처리
+                  th 상태
+                  th(v-if="tab>1 && tab!=3") 배팅
+                  th(v-if="tab>1") 소유자
+                  th(v-if="user.master") 출금기록생성
+                  th 상세
+                  th(v-if="tab==3") 처리
+                  th(v-if="tab!=0 && tab!=3") 초기화
+                  th(v-if="tab==2") 휴지통
+                  th(v-if="tab!=3") 제거
+                  th(v-if="tab==4") 복구
+              tbody(v-if="tab==5&&user.master")
+                tr(v-for="account, i in accounts")
+                  td {{i+1}}
+                  td {{account.number}}
+                  td 
+                    svg.icon-svg(style="margin-top: -2px; width: 30px;height: 17px; margin-right:4px;")
+                      use(:xlink:href="'/vendors/@coreui/icons/sprites/flag.svg#cif-'+account.country.toLowerCase()")
+                    | {{countryName(account.country)}}
+                  td
+                    span(:class="account.limited?'text-warning':account.died?'text-danger':'text-success'") {{account.id}}
+                  td {{account.pw}}
+                  td {{(new Date(account.createdAt)).toLocaleDateString()}}
+                  //- 상태
+                  td
+                    span.badge.badge-danger(v-if="account.died") 졸업
+                    span.badge.badge-warning(v-else-if="account.limited") 짤짤이
+                    span.badge.badge-success(v-else) 완통                  
+                  //- 배팅
+                  td
+                    span.badge.badge-pill.badge-secondary {{account.betCount||0}}
+                  td
+                    button.btn.btn-sm.btn-danger(v-on:click="resurrectionAccount(account._id)")
+                      |살리기
+              tbody(v-else)
+                tr(v-for="account, i in accounts")
+                  td {{i+1}}
+                  td {{account.number}}
+                  td 
+                    svg.icon-svg(style="margin-top: -2px; width: 30px;height: 17px; margin-right:4px;")
+                      use(:xlink:href="'/vendors/@coreui/icons/sprites/flag.svg#cif-'+account.country.toLowerCase()")
+                    | {{countryName(account.country)}}
+                  td
+                    span(:class="account.limited?'text-warning':account.died?'text-danger':'text-success'") {{account.id}}
+                  td {{account.pw}}
+                  td {{(new Date(account.createdAt)).toLocaleDateString()}}
+                  td(v-if="tab==3") {{(new Date(account.depositDate)).toLocaleString()}}
+                  td(v-if="tab==0")
+                    .input-group
+                      input.account-money-input.form-control(type="number" placeholder='0' :value="account.money?account.money:''" :data-id="account._id")
+                      span.input-group-append
+                        .btn-group
+                          button.btn.btn-sm.btn-primary(type="button" v-on:click="doChargeComplete(account._id)")
+                            |충전완료
+                          //- button.btn.btn-sm.btn-info(type="button" v-on:click="openBrowserForMoneyCheck(account)")
+                            |잔액확인
+                  td(v-else) ${{comma(account.money)}}
+                  //- 상태
+                  td
+                    span.badge.badge-danger(v-if="account.died") 졸업
+                    span.badge.badge-warning(v-else-if="account.limited") 짤짤이
+                    span.badge.badge-success(v-else) 완통                  
+                  //- 배팅
+                  td(v-if="tab>1 && tab!=3")
+                    span.badge.badge-pill.badge-secondary {{account.betCount||0}}
+                  //- 소유자
+                  td(v-if="tab>1")
+                    a(:href="'#'+account.user.email" style="cursor:pointer" v-on:click="loadListTo(account.user.email)")
+                      |{{account.user.email}}
+                    button.btn.btn-sm.btn-warning(v-if="account.user.email&&tab==2" type="button" v-on:click="removeAccountUser(account._id)")
+                      |회수
+                  td(v-if="user.master")
+                    .input-group
+                      input.force-request-withdraw-money-input.form-control(style="width: 41px !important" type="number" placeholder='0' value="" :data-id="account._id")
+                      span.input-group-append                 
+                        button.btn.btn-sm.btn-info(type="button" v-on:click="requestWithdrawForce(account)")
+                          |출금기록생성
+                  td
+                    button.btn.btn-sm.btn-warning(type="button" v-on:click="openAccountModal(account._id)")
+                      |상세
+                  td(v-if="tab!=0 && tab!=3")
+                    button.btn.btn-sm.btn-danger(v-on:click="resetAccount(account._id)")
+                      |초기화
+                  td(v-if="tab==3")
+                    .btn-group(v-if="account.depositStatus=='requested'")
+                      button.btn.btn-sm.btn-success(v-on:click="deposit(account)")
+                        |승인요청
+                      button.btn.btn-sm.btn-danger(v-on:click="rejectDeposit(account)")
+                        |반려
+                    button.btn.btn-sm.btn-danger(v-if="account.depositStatus=='outstanding'" v-on:click="cancelDeposit(account)")
+                      |승인요청취소
+                  td(v-if="tab==2")
+                    button.btn.btn-sm.btn-danger(v-on:click="trashAccount(account)")
+                      |휴지통
+                  td(v-if="tab!=3")
+                    button.btn.btn-sm.btn-danger(v-on:click="removeAccount(account._id)")
+                      |제거
+                  td(v-if="tab==4")
+                    button.btn.btn-sm.btn-danger(v-on:click="restoreAccount(account._id)")
+                      |휴지통에서 복구
+          nav
+            ul.pagination.justify-content-center(v-if="accounts.length>0")
+              li.page-item
+                a.page-link(v-if="startPage>0" href="#" aria-label="Previous" v-on:click="loadList(startPage-1, tab, {searchId, email})")
+                  span(aria-hidden="true") «
+                  span.sr-only Previous
+              li.page-item(v-for="i in pages" :class="curPage==i?'active':''")
+                a.page-link(v-if="curPage==i") {{i+1}}
+                a.page-link(v-else href="#" v-on:click="loadList(i, tab, {searchId, email})") {{i+1}}
+              li.page-item
+                a.page-link(v-if="maxPage>endPage" href="#" aria-label="Next" v-on:click="loadList(endPage+1, tab, {searchId, email})")
+                  span(aria-hidden="true") »
+                  span.sr-only Next

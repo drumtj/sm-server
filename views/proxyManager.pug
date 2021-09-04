@@ -1,0 +1,74 @@
+extends _layout/default.pug
+
+//-block styles
+
+block append styles
+  style.
+    .price {
+      color:yellow;
+      font-weight:400;
+    }
+    .table td, .table th {
+      text-align: center;   
+    }
+    .rm {
+      margin-right: 20px;
+    }
+    .proxy-link {
+      display: inline;
+    }
+
+block scripts
+  script(src="/js/proxyManager.js")
+
+block view
+  .fade-in.pre-hide#app    
+    h1
+      span.rm 프록시IP 관리
+      button.btn.btn-square.btn-vimeo(type="button" v-on:click="openProxyStoreModal" style="background:#d9dc1e")
+        svg.c-icon.mr-2
+          use(xlink:href="/vendors/@coreui/icons/svg/brand.svg#cib-addthis")
+        |프록시IP 발급
+    hr
+    h2
+      |{{proxys.length}} 개    
+    table#storeTable.table.table-responsive-sm.table-bordered.table-striped.table-sm
+      thead
+        tr
+          th proxyHttp
+          th 국가
+          th 가격(발급비용)
+          th 발급
+      tbody.account-table-body
+        tr(v-for="proxy in storeProxys")
+          td {{proxy.proxyHttp}}
+          td
+            svg.icon-svg(style="width: 30px;height: 17px;")
+              use(:xlink:href="'/vendors/@coreui/icons/sprites/flag.svg#cif-'+proxy.country.toLowerCase()")
+            |{{getCountryName(proxy)}}
+          td
+            span.price
+              |${{proxy.price}}
+          td
+            button.btn.btn-sm.btn-square.btn-success.btn-account(type="button" v-on:click="buyProxy(proxy)")
+              |발급
+    .row
+      .col-sm-4.col-md-4(v-for="proxy in proxys")
+        .card.border-primary
+          .card-body
+            .btn-toolbar.justify-content-between
+              svg.c-icon(v-if="proxy.browser")
+                use(xlink:href="/vendors/@coreui/icons/svg/solid.svg#cis-link-intact")
+              .aid
+                span(style="font-size:14pt;color:rgb(220, 228, 56)") [{{proxy.number}}]
+                span(style="margin-left:4px") 
+                  .proxy-link
+                    svg.icon-svg(style="width: 30px;height: 17px;")
+                      use(:xlink:href="'/vendors/@coreui/icons/sprites/flag.svg#cif-'+proxy.country.toLowerCase()")
+                    |{{proxy.proxyHttp}}
+              .expire(style="line-height: 2.2;") {{printExpire(proxy)}}
+              .btn-group
+                button.btn.btn-sm.btn-square.btn-danger(type="button" v-on:click="removeProxy(proxy._id)")
+                  svg.c-icon
+                    use(xlink:href="/vendors/@coreui/icons/svg/solid.svg#cis-trash")
+                  | 제거

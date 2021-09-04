@@ -1,0 +1,99 @@
+extends _layout/default.pug
+
+block styles
+  style.
+    .start-date, .end-date {
+      width: 126px !important;
+    }
+
+block scripts
+  script(src="/js/home.js")
+
+block view
+  .fade-in.pre-hide#app
+    .row
+      .col-md
+        ul.nav.nav-tabs
+          li.nav-item
+            a.nav-link(href="#0" v-on:click="reload(0, 0)" :class="tab==0?'active':''") 농구
+          li.nav-item
+            a.nav-link(href="#1" v-on:click="reload(0, 1)" :class="tab==1?'active':''") 야구
+          li.nav-item
+            a.nav-link(href="#2" v-on:click="reload(0, 2)" :class="tab==2?'active':''") 하키          
+        .card
+          .card-header
+            div
+              span 목록 ({{count}})
+              span(style="margin-left:10px")
+                .btn-group
+                  button.btn.btn-sm.btn-primary(type="button" v-on:click="reload")
+                    svg.c-icon.c-icon-lg
+                      use(xlink:href="/vendors/@coreui/icons/sprites/solid.svg#cis-reload")
+                  button.btn.btn-sm.btn-secondary(type="button" v-on:click="resetReload")
+                    |검색조건 초기화
+              span.float-right
+                .form-inline                  
+                  .form-group
+                    .input-group
+                      .input-group-prepend
+                        .input-group-text 시작일
+                      input.form-control.date.start-date(type="text" readOnly)
+                  .form-group
+                    .input-group
+                      .input-group-prepend
+                        .input-group-text 종료일
+                      input.form-control.date.end-date(type="text" readOnly)
+                  .form-group
+                    button.btn.btn-primary(type="button" v-on:click="reload(0)") 찾기
+          .card-body.table-responsive
+            table.table.table-sm.table-responsive-sm.table-hover.table-bordered
+              //- thead
+                tr
+                  th 등록번호                  
+                  th 등록일
+                  th IP
+                  th 이름
+                  th 이메일
+                  th 전화번호
+                  th 생년월일
+                  th 추천수
+                  th 추천인
+                  th 신분증-앞
+                  th 신분증-뒤
+                  th 들찍
+                  th(v-if="tab<2") 오픈톡요청
+                  th(v-if="tab<2") 인증요청
+                  template(v-if="tab<3")
+                    th 승인
+                  template(v-if="tab!=1&&tab!=4")
+                    th 지급
+                    th 추천인 지급
+                  th 상세
+                  th(v-if="tab!=4") 휴지통
+                  th(v-else) 복구
+                  th 삭제
+              tbody
+                template(v-for="game, i in games")
+                  tr.bg-dark(v-if="game.country")
+                    td(:colspan="user.admin?'6':'5'") {{game.country}} ≫ {{game.name}}
+                  tr(v-else :class="game.live?'text-info':!game.settled?'text-danger':''")
+                    td {{game.dateStr + (game.live?' (LIVE)':'')}}
+                    td {{game.live?game.time+` (${game.liveTime})`:game.time}}
+                    td(:class="game.settled&&game.result=='1'?'bg-success':''") {{game.home.name}}
+                    td(:class="game.settled&&game.result=='2'?'bg-success':''") {{game.away.name}}
+                    td {{game.homeScore!=-1?game.homeScore+':'+game.awayScore:game.cancelMemo}}
+                    td(v-if="user.admin")
+                      button.btn.btn-danger.btn-sm(type="button" v-on:click="removeGame(game)") 제거
+          nav
+            ul.pagination.justify-content-center(v-if="games.length>0")
+              li.page-item
+                a.page-link(v-if="startPage>0" href="#" aria-label="Previous" v-on:click="reload(startPage-1)")
+                  span(aria-hidden="true") «
+                  span.sr-only Previous
+              li.page-item(v-for="i in pages" :class="curPage==i?'active':''")
+                a.page-link(v-if="curPage==i") {{i+1}}
+                a.page-link(v-else :href="'#'+i" v-on:click="reload(i)") {{i+1}}
+              li.page-item
+                a.page-link(v-if="maxPage>endPage" href="#" aria-label="Next" v-on:click="reload(endPage+1)")
+                  span(aria-hidden="true") »
+                  span.sr-only Next

@@ -1,0 +1,45 @@
+extends _layout/pages.pug
+
+block view
+  .container
+    .row.justify-content-center
+      .col-md-6
+        .card.mx-4
+          .card-body.p-4
+            h1 회원가입 신청
+            p.text-muted 가입하실 계정 정보를 입력하세요
+            //-.input-group.mb-3
+              .input-group-prepend
+                span.input-group-text
+                  svg.c-icon
+                    use(xlink:href="vendors/@coreui/icons/sprites/free.svg#cil-user")
+              input.form-control(type='text', placeholder='Username')
+            .input-group.mb-3
+              .input-group-prepend
+                span.input-group-text
+                  svg.c-icon
+                    use(xlink:href="/vendors/@coreui/icons/sprites/free.svg#cil-envelope-open")
+              input.form-control#form-email(type='text', placeholder='Email', value=param.email)
+            .input-group.mb-3
+              .input-group-prepend
+                span.input-group-text
+                  svg.c-icon
+                    use(xlink:href="/vendors/@coreui/icons/sprites/free.svg#cil-lock-locked")
+              input.form-control#form-pw(type='password', placeholder='Password')
+            .input-group.mb-4
+              .input-group-prepend
+                span.input-group-text
+                  svg.c-icon
+                    use(xlink:href="/vendors/@coreui/icons/sprites/free.svg#cil-lock-locked")
+              input.form-control.border.border-danger#form-pw2(type='password', placeholder='Repeat password')
+            button.btn.btn-block.btn-success#btn-register(type='button') 가입신청
+          //-.card-footer.p-4
+            .row
+              .col-6
+                button.btn.btn-block.btn-facebook(type='button')
+                  span facebook
+              .col-6
+                button.btn.btn-block.btn-twitter(type='button')
+                  span twitter
+block scripts
+  script(src="/js/register.js")

@@ -1,0 +1,167 @@
+extends ../_layout/default.pug
+
+block scripts
+  script(src="/js/admin/memberManager.js")
+  
+block append styles
+  style.
+    .table td, .table th {
+      text-align: center;   
+    }
+    .pmoney, .wallet {
+      text-align: right;
+    }
+    /* .money-input {
+      -webkit-appearance: none !important;
+      margin: 0 !important;
+    } */
+
+block view
+  h1 [마스터] 회원관리
+  hr
+  .fade-in.pre-hide#app
+    
+    table#authTable.table.table-sm.table-responsive-sm
+      thead
+        tr
+          th 페이지
+          th 권한부여/제거
+      tbody
+        tr(v-for="authLink in authLinks")
+          td {{authLink.name}}
+          td
+            button.btn.btn-sm.btn-danger(v-if="authModalUser && authModalUser.authority && authModalUser.authority[authLink.link]" type="button" v-on:click="removeAuth(authModalUser, authLink)")
+              |권한제거
+            button.btn.btn-sm.btn-warning(v-else type="button" v-on:click="addAuth(authModalUser, authLink)")
+              |권한부여
+                   
+    table#programsInfoTable.table.table-sm.table-responsive-sm
+      thead
+        tr
+          th #
+          th PC이름
+          th 브라우져 수
+      tbody
+        tr(v-for="program, j in programInfoModalUser.programs")
+          th {{j+1}}
+          th {{program.name || '이름없음('+program._id+')'}}
+          th {{program.browsers.length}}
+          
+    .row
+      .col-md
+        ul.nav.nav-tabs
+          li.nav-item
+            a.nav-link(href="#0" v-on:click="loadList(0, 0)" :class="tab==0?'active':''") 가입요청목록
+          li.nav-item
+            a.nav-link(href="#1" v-on:click="loadList(0, 1)" :class="tab==1?'active':''") 가입승인목록
+          li.nav-item
+            a.nav-link(href="#2" v-on:click="loadList(0, 2)" :class="tab==2?'active':''") 관리자목록
+        .card
+          .card-header
+            | 멤버 목록 ({{count}})
+          .card-body.table-responsive
+            table.table.table-sm.table-responsive-sm.table-striped.table-hover.table-bordered
+              thead
+                tr
+                  th #
+                  th 등록번호
+                  th 이메일
+                  th 등록일
+                  th IP
+                  th(v-if="tab>0" style="width: 210px;")
+                    .c-money.c-money-site
+                      img.c-icon.mr-2(src="/assets/img/pn-icon.png")
+                      span P머니
+                  th(v-if="tab>0" style="width: 210px;")
+                    .c-money.c-money-wallet
+                      svg.c-icon.mr-2
+                        use(xlink:href="/vendors/@coreui/icons/sprites/linear.svg#cil-wallet")
+                      span 지갑
+                  th(v-if="tab>0")
+                    .c-money.c-money-bet365
+                      img.c-icon.mr-2(src="/assets/img/bet365-icon.png")
+                      span B머니
+                  th(v-if="tab>0" style="width: 280px;") PC (프로그램)제한 설정
+                  th(v-if="tab>0" style="width: 215px;") 브라우져제한 설정
+                  th(v-if="tab>0") 브라우져
+                  th(v-if="tab>0") 보유계정
+                  th(v-if="tab>0") 관리권한
+                  th(v-if="tab>0") 초기화
+                  th(v-if="tab==0") 승인
+                  th 제거
+              tbody
+                tr(v-for="user, i in users")
+                  td {{i+1}}
+                  td {{user.number}}
+                  td {{user.email}}
+                  td {{(new Date(user.createdAt)).toLocaleDateString()}}
+                  td {{user.ip}}
+                  td(v-if="tab>0")
+                    .input-group
+                      .input-group-prepend
+                        .input-group-text ${{comma(user.money)}}
+                      input.form-control.money-input.pmoney(type="number" :data-id="user._id" placeholder="0" value="")
+                      .input-group-append
+                        button.btn.btn-sm.btn-primary(type="button" v-on:click="addPmoney(user)")
+                          |추가
+                  td(v-if="tab>0")
+                    .input-group
+                      .input-group-prepend
+                        .input-group-text ${{comma(user.wallet)}}
+                      input.form-control.money-input.wallet(type="number" :data-id="user._id" placeholder="0" value="")
+                      .input-group-append
+                        button.btn.btn-sm.btn-primary(type="button" v-on:click="addWallet(user)")
+                          |추가
+                  td(v-if="tab>0") {{comma(user.bet365Money)}}
+                  td(v-if="tab>0")
+                    //PC(program) count                
+                    .input-group
+                      .input-group-prepend
+                        span.input-group-text {{user.programs.length}} 개
+                        button.btn.btn-sm.btn-warning(v-on:click="openProgramsModal(user)")
+                          |상세보기
+                      input.form-control.program-count(type="number" :data-id="user._id" :value="user.programCount")                      
+                      .input-group-append
+                        button.btn.btn-sm.btn-primary(type="button" v-on:click="updateProgramCount(user)")
+                          |최대수량설정
+                  td(v-if="tab>0")
+                    //browser count
+                    .input-group
+                      .input-group-prepend
+                        span.input-group-text {{user.browserCount}} 개
+                      input.form-control.browser-count(type="number" :data-id="user._id" :value="user.browserCount")
+                      .input-group-append
+                        button.btn.btn-sm.btn-primary(type="button" v-on:click="updateBrowserCount(user)")
+                          |최대수량설정
+                  td(v-if="tab>0")
+                    | {{user.programs.reduce(function(r,p){return r+p.browsers.length}, 0)}} 개
+                  td(v-if="tab>0") {{user.accountCount}} 개
+                  td(v-if="tab>0")
+                    span.badge(:class="user.authority?'badge-success':'badge-secondary'") {{Object.keys(user.authority||{}).length}}
+                    | 
+                    button.btn.btn-sm.btn-warning(v-on:click="openAuthModal(user)")
+                      |권한설정
+                  td(v-if="tab>0")
+                    button.btn.btn-sm.btn-danger(v-on:click="resetUser(user._id)")
+                      |초기화
+                  td(v-if="tab==0")
+                    button.btn.btn-sm.btn-warning(v-on:click="acceptUser(user._id)")
+                      |승인
+                  td
+                    button.btn.btn-sm.btn-danger(v-on:click="removeUser(user._id)")
+                      |제거
+          nav
+            ul.pagination.justify-content-center(v-if="users.length>0")
+              li.page-item
+                a.page-link(v-if="startPage>0" href="#" aria-label="Previous" v-on:click="loadList(startPage-1, tab)")
+                  span(aria-hidden="true") «
+                  span.sr-only Previous
+              li.page-item(v-for="i in pages" :class="curPage==i?'active':''")
+                a.page-link(v-if="curPage==i") {{i+1}}
+                a.page-link(v-else :href="'#'+i" v-on:click="loadList(i, tab)") {{i+1}}
+              li.page-item
+                a.page-link(v-if="maxPage>endPage" href="#" aria-label="Next" v-on:click="loadList(endPage+1, tab)")
+                  span(aria-hidden="true") »
+                  span.sr-only Next
+      
+      

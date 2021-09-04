@@ -1,0 +1,230 @@
+extends ../_layout/default.pug
+
+block scripts
+  script(src="/js/admin/optionManager.js")
+
+block append styles
+  style.    
+    .rm {
+      margin-right: 20px;
+    }
+    .btn-option {
+      margin: 10px;
+    }
+    .range-value {
+      padding: .375rem .75rem;
+      text-align: center;
+    }
+    .range-container>.range-value {
+      width: 25%;
+      position: absolute;
+      right: 0px;
+    }
+    .range-container {
+      position: relative;
+      width: 80%;
+    }
+    
+    input[type=range] {
+      -webkit-appearance: none !important;
+      pointer-events: none !important;
+      overflow: hidden !important;      
+      /* width: 100% !important; */
+    }
+    .range-container>input[type=range] {
+      position: absolute !important;
+      overflow: hidden !important;
+      /* width: calc(100% - 80px) !important; */
+      width: 75% !important;      
+    }
+    
+    input[type=range]:focus {
+      outline: none !important;
+    }
+    /* input.range2[type=range]::-moz-range-track {
+      position: relative;
+      z-index: -1;
+      background-color: rgba(0, 0, 0, 1);
+      border: 0;
+    }
+    input[type=range]::-moz-range-track {
+      -moz-appearance: none;
+      background: none transparent;
+      border: 0;
+    }  */
+    
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100% !important;
+      height: 7px !important;
+      background: #fff !important;
+      border-radius: 7px !important;
+      
+      pointer-events: none !important;
+      /* position: relative !important; */
+      /* z-index: 1 !important; */
+      -webkit-appearance: none !important;
+    }
+    /* input.range2[type=range]::-webkit-slider-runnable-track {      
+      background: transparent;
+    } */
+    input[type=range]::-webkit-slider-thumb {
+      pointer-events: all !important;
+      position: relative !important;
+      z-index: 10 !important;
+      
+      border: 1px solid transparent !important;
+      height: 15px !important;
+      width: 15px !important;
+      background: #0075ff !important;
+      cursor: pointer !important;
+      border-radius: 15px !important;
+      -webkit-appearance: none !important;
+      margin-top: -4px !important;
+    }
+    /* input.range[type=range] {
+      position: absolute;
+    } */
+    
+
+block view
+  .fade-in.pre-hide#app
+    h1
+      span.rm [관리자] 옵션관리
+      button.btn.btn-square(style="background-color:rgb(221 230 74)" type="button" v-on:click="openOptionRegistModal")
+        svg.c-icon.mr-2
+          use(xlink:href="/vendors/@coreui/icons/svg/brand.svg#cib-addthis")
+        |옵션등록
+    hr
+            
+    .card.option-form
+      .card-header
+        .form-group.row
+          label.col-md-3.col-form-label 옵션이름
+          .col-md-9
+            input#optionName.form-control(placeholder="옵션 이름을 입력하세요" v-on:change="update" :value="optionName")
+            em#optionNameValidMessage.error.invalid-feedback 옵션 이름을 입력해주세요
+      .card-body
+        .form-group.row(v-for="form in forms")
+          label.col-md-3.col-form-label(:for="form.key") {{form.name}}
+          .col-md-9(v-if="form.type=='hr'")
+            hr(style="border-color:rgb(156 156 156)")
+          
+          //조건식 에디터
+          .col-md-9(v-else-if="form.type=='exceptEventList'")
+            .card
+              .card-header
+                .input-group(v-for="btn in form.btns")
+                  .input-group-prepend
+                    span.input-group-text(v-html="btn.name")
+                  template(v-if="btn.type=='button'")
+                    button.btn.btn-sm(:class="'btn-outline-'+btn.colorType" style="margin:1px" v-for="item in btn.list" v-on:click="addConditionItem(form, btn, item)") {{item.name}}
+                  template(v-if="btn.type=='number'")
+                    input.form-control(type="number")
+                    button.btn.btn-danger.btn-sm(v-on:click="addConditionItem(form, btn, $event.target.previousElementSibling)") 확인
+                hr
+                .card-header(:class="checkStage(form.stage)?'border-success':'border-danger'")
+                  template(v-for="(kv,i) in form.stage")
+                    span.badge(:class="'badge-'+kv.colorType" v-html="kv.name" style="margin:2px;cursor:pointer;" v-on:click="form.stage.splice(i,1)")
+                button.btn.btn-info.btn-block.btn-square(v-on:click="addExceptEventCondition(form)") 추가
+              .card-body
+                template(v-for="(stage,i) in form.value")
+                  button.btn.btn-danger.btn-sm.btn-square(v-on:click="form.value.splice(i,1)") X
+                  template(v-for="kv in stage")
+                    span.badge(:class="'badge-'+kv.colorType" v-html="kv.name" style="margin:2px")
+                  hr
+            span.help-block(v-if="form.help") {{form.help}}
+            
+          .col-md-9(v-else-if="form.type=='slideRangeMix'")
+            template(v-for="item in form.list")
+              .input-group(v-if="item.type=='range'")
+                .input-group-prepend(v-if="item.prepend")
+                  span.input-group-text(v-html="item.prepend")
+                .range-container
+                  input.form-control.range1(v-on:input="update" :id="form.key+'_'+item.name+'_'+0" type="range" :name="form.key+'_'+item.name+'_'+0" :value="form.value[item.name][0]" :max="item.max" :min="item.min" :step="item.step")
+                  input.form-control.range2(v-on:input="update" :id="form.key+'_'+item.name+'_'+1" type="range" :name="form.key+'_'+item.name+'_'+1" :value="form.value[item.name][1]" :max="item.max" :min="item.min" :step="item.step")
+                  .range-value(v-html="Math.min(form.value[item.name][0],form.value[item.name][1]) + ' ~ ' + Math.max(form.value[item.name][0],form.value[item.name][1])")
+              .input-group(v-else-if="item.type=='slide'")
+                .input-group-prepend(v-if="item.prepend")
+                  span.input-group-text(v-html="item.prepend")
+                input.form-control(v-on:input="update" :id="form.key+'_'+item.name" type="range" :name="form.key+'_'+item.name" :value="form.value[item.name]" :max="item.max" :min="item.min" :step="item.step")
+                .range-value(v-html="form.value[item.name]")
+            span.help-block(v-if="form.help") {{form.help}}
+            
+          //- .col-md-9(v-else-if="form.type=='rangeList'")
+            .input-group(v-for="item in form.list")
+              .input-group-prepend(v-if="item.prepend")
+                span.input-group-text(v-html="item.prepend")
+              .range-container
+                input.form-control.range1(v-on:input="update" :id="form.key+'_'+item.name+'_'+0" type="range" :name="form.key+'_'+item.name+'_'+0" :value="form.value[item.name][0]" :max="item.max" :min="item.min" :step="item.step")
+                input.form-control.range2(v-on:input="update" :id="form.key+'_'+item.name+'_'+1" type="range" :name="form.key+'_'+item.name+'_'+1" :value="form.value[item.name][1]" :max="item.max" :min="item.min" :step="item.step")
+                .range-value(v-html="Math.min(form.value[item.name][0],form.value[item.name][1]) + ' ~ ' + Math.max(form.value[item.name][0],form.value[item.name][1])")
+            span.help-block(v-if="form.help") {{form.help}}
+            
+          .col-md-9(v-else-if="form.type=='range'")
+            .input-group
+              .input-group-prepend(v-if="form.prepend")
+                span.input-group-text(v-html="form.prepend")
+              .range-container
+                input.form-control.range1(v-on:input="update" :id="form.key+'_'+0" type="range" :name="form.key+'_'+0" :value="form.value[0]" :max="form.max" :min="form.min" :step="form.step")
+                input.form-control.range2(v-on:input="update" :id="form.key+'_'+1" type="range" :name="form.key+'_'+1" :value="form.value[1]" :max="form.max" :min="form.min" :step="form.step")
+                .range-value(v-html="Math.min(form.value[0],form.value[1]) + ' ~ ' + Math.max(form.value[0],form.value[1])")
+            span.help-block(v-if="form.help") {{form.help}}
+            
+          //- .col-md-9(v-else-if="form.type=='slideList'")
+            .input-group(v-for="item in form.list")
+              .input-group-prepend(v-if="item.prepend")
+                span.input-group-text(v-html="item.prepend")
+              input.form-control(v-on:input="update" :id="form.key+'_'+item.name" type="range" :name="form.key+'_'+item.name" :value="form.value[item.name]" :max="item.max" :min="item.min" :step="item.step")
+              .range-value(v-html="form.value[item.name]")
+            span.help-block(v-if="form.help") {{form.help}}
+            
+          .col-md-9(v-else-if="form.type=='slide'")
+            .input-group
+              .input-group-prepend(v-if="form.prepend")
+                span.input-group-text(v-html="form.prepend")
+              input.form-control(v-on:input="update" :id="form.key" type="range" :name="form.key" :value="form.value" :max="form.max" :min="form.min" :step="form.step")
+              .range-value(v-html="form.value")
+              .input-group-append(v-if="form.append")
+                span.input-group-text(v-html="form.append")
+            span.help-block(v-if="form.help") {{form.help}}
+            
+          .col-md-9(v-else-if="form.type=='number'")
+            .input-group
+              .input-group-prepend(v-if="form.prepend")
+                span.input-group-text(v-html="form.prepend")
+              input.form-control(v-on:change="update" :id="form.key" type="number" :name="form.key" :placeholder="form.placeholder?form.placeholder:''" :max="form.max" :min="form.min" :step="form.step" :value="form.value")
+              .input-group-append(v-if="form.append")
+                span.input-group-text(v-html="form.append")
+            span.help-block(v-if="form.help") {{form.help}}
+            
+          .col-md-9(v-else-if="form.type=='text'")
+            .input-group
+              .input-group-prepend(v-if="form.prepend")
+                span.input-group-text(v-html="form.prepend")
+              input.form-control(v-on:change="update" :id="form.key" type="text" :name="form.key" :placeholder="form.placeholder?form.placeholder:''" :value="form.value")
+              .input-group-append(v-if="form.append")
+                span.input-group-text(v-html="form.append")
+            span.help-block(v-if="form.help") {{form.help}}
+            
+          .col-md-9(v-else-if="form.type=='select'")
+            select.form-control(v-on:change="update" :id="form.key" :name="form.key")          
+              option(v-for="opt in form.list" :value="opt.value" :selected="opt.value == form.value") {{opt.name}}
+            span.help-block(v-if="form.help") {{form.help}}
+            
+          .col-md-9.col-form-label(v-else-if="form.type=='radio'")
+            .form-check(v-for="opt in form.list")
+              input.form-check-input(v-on:change="update" :id="form.key+'_'+opt.value" type="radio" :checked="opt.value == form.value" :value="opt.value" :name="form.key")
+              label.form-check-label(:for="form.key+'_'+opt.value") {{opt.name}}
+            span.help-block(v-if="form.help") {{form.help}}
+            
+          .col-md-9.col-form-label(v-else-if="form.type=='checkbox'")
+            .form-check.checkbox(v-for="opt in form.list")
+              input.form-check-input(v-on:change="update" :id="form.key+'_'+opt.value" type="checkbox" :checked="form.value[opt.value]")
+              label.form-check-label(:for="form.key+'_'+opt.value") {{opt.name}}
+            span.help-block(v-if="form.help") {{form.help}}
+    
+    .row
+      .button-group.btn-option(v-for="option in options")
+        button.btn.btn-square(type="button" v-on:click="openOptionModal(option._id)" :class="option.permission=='admin'?'btn-info':'btn-warning'")
+          | {{option.name}}
+        button.btn.btn-square.btn-danger(v-on:click="removeOption(option._id)") &times;

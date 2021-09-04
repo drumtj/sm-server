@@ -1,0 +1,101 @@
+extends _layout/default.pug
+
+block append styles
+  style.
+    .table td, .table th {
+      text-align: center;   
+    }
+    .pmoney, .wallet {
+      text-align: right;
+    }
+    .start-date, .end-date {
+      width: 130px !important;
+    }
+    .input-group>input {
+      width: 130px !important;
+    }
+
+block scripts
+  script(src='/js/withdrawHistory.js')
+
+block view
+  h1 출금기록
+  hr
+  .fade-in.pre-hide#app          
+    .row
+      .col-md
+        ul.nav.nav-tabs
+          li.nav-item
+            a.nav-link(href="#0" v-on:click="reload" :class="tab==0?'active':''") 기록
+        .card
+          .card-header
+            span 목록 ({{count}})
+            span(style="margin-left:10px")
+              .btn-group
+                button.btn.btn-sm.btn-primary(type="button" v-on:click="reload")
+                  svg.c-icon.c-icon-lg
+                    use(xlink:href="/vendors/@coreui/icons/sprites/solid.svg#cis-reload")
+                button.btn.btn-sm.btn-secondary(type="button" v-on:click="resetReload")
+                  |검색조건 초기화
+            span.float-right
+              .form-inline                                
+                .form-group
+                  .input-group
+                    .input-group-prepend
+                      .input-group-text ID
+                    input.form-control.search-id(type="text" :value="searchId?searchId:''" v-on:change="changeSearchId")
+                .form-group
+                  button.btn.btn-primary(type="button" v-on:click="reload") 찾기
+            span.float-right(style="margin-right:30px;")
+              .form-inline
+                .form-group
+                  .input-group
+                    .input-group-prepend
+                      .input-group-text 시작일
+                    input.form-control.start-date(type="text" readOnly)
+                .form-group
+                  .input-group
+                    .input-group-prepend
+                      .input-group-text 종료일
+                    input.form-control.end-date(type="text" readOnly)
+            span.float-right(style="margin-right:100px;")
+              .form-inline
+                .form-group
+                  .input-group
+                    .input-group-prepend
+                      .input-group-text 총출금
+                    input.form-control.result-sum(type="text" :value="round(sumWithdraw,2)" readOnly)                
+          .card-body.table-responsive
+            table.table.table-sm.table-responsive-sm.table-striped.table-hover.table-bordered
+              thead
+                tr
+                  th #
+                  th 국가
+                  th ID
+                  th 출금액
+                  th 출금일
+              tbody
+                tr(v-for="item, i in list")
+                  td {{i+1}}
+                  td
+                    svg.icon-svg(style="margin-top: -2px; width: 30px;height: 17px; margin-right:4px;")
+                      use(:xlink:href="'/vendors/@coreui/icons/sprites/flag.svg#cif-'+item.account.country.toLowerCase()")
+                    | {{countryName(item.account.country)}} 
+                  td
+                    a(:href="'#'+tab" style="cursor:pointer" v-on:click="reload(curPage, tab, {searchId:item.account.id})")
+                      |{{item.account.id}}
+                  td {{round(item.withdraw, 2)}}
+                  td {{(new Date(item.createdAt)).toLocaleString()}}
+          nav
+            ul.pagination.justify-content-center(v-if="list.length>0")
+              li.page-item
+                a.page-link(v-if="startPage>0" href="#" aria-label="Previous" v-on:click="reload(startPage-1)")
+                  span(aria-hidden="true") «
+                  span.sr-only Previous
+              li.page-item(v-for="i in pages" :class="curPage==i?'active':''")
+                a.page-link(v-if="curPage==i") {{i+1}}
+                a.page-link(v-else :href="'#'+i" v-on:click="reload(i)") {{i+1}}
+              li.page-item
+                a.page-link(v-if="maxPage>endPage" href="#" aria-label="Next" v-on:click="reload(endPage+1)")
+                  span(aria-hidden="true") »
+                  span.sr-only Next

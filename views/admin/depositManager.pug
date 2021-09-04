@@ -1,0 +1,135 @@
+extends ../_layout/default.pug
+
+block append styles
+  style.
+    .table td, .table th {
+      text-align: center;   
+    }
+    .pmoney, .wallet {
+      text-align: right;
+    }
+    .start-date, .end-date {
+      width: 130px !important;
+    }
+
+block scripts
+  script(src='/js/admin/depositManager.js')
+
+block view
+  h1 [관리자] 입출금기록
+  hr
+  .fade-in.pre-hide#app          
+    .row
+      .col-md
+        ul.nav.nav-tabs
+          li.nav-item
+            a.nav-link(href="#0" v-on:click="reload" :class="tab==0?'active':''") 기록
+        .card
+          .card-header
+            span 목록 ({{count}})
+            span(style="margin-left:10px")
+              button.btn.btn-sm.btn-primary(type="button" v-on:click="reload")
+                svg.c-icon.c-icon-lg
+                  use(xlink:href="/vendors/@coreui/icons/sprites/solid.svg#cis-reload")
+            span.float-right
+              .form-inline
+                .form-group
+                  .input-group
+                    .input-group-prepend
+                      .input-group-text 입/출금종류
+                    select.form-control.search-type(v-on:change="changeSearchType" :value="type")
+                      option(value="") --------
+                      option(value="deposit") 입금
+                      option(value="withdraw") 출금
+                      option(value="set") 초기화
+                .form-group
+                  .input-group
+                    .input-group-prepend
+                      .input-group-text 머니타입
+                    select.form-control.search-money-type(v-on:change="changeSearchMoneyType" :value="moneyName")
+                      option(value="") --------
+                      option(value="wallet") 지갑
+                      option(value="money") 피나클
+                .form-group
+                  .input-group
+                    .input-group-prepend
+                      .input-group-text 대상
+                    select.form-control.search-email(v-on:change="changeSearchEmail" :value="email?email:''")
+                      option(value="") --------
+                      option(v-for="user in users" :value="user.email") {{user.email}}
+                .form-group
+                  .input-group
+                    .input-group-prepend
+                      .input-group-text 시행자
+                    select.form-control.search-from(v-on:change="changeSearchFrom" :value="from?from:''")
+                      option(value="") --------
+                      option(v-for="f in getFromList()" :value="f") {{f}}
+                .form-group
+                  button.btn.btn-primary(type="button" v-on:click="reload") 찾기
+            span.float-right(style="margin-right:30px;")
+              .form-inline
+                .form-group
+                  .input-group
+                    .input-group-prepend
+                      .input-group-text 시작일
+                    input.form-control.start-date(type="text" readOnly)
+                .form-group
+                  .input-group
+                    .input-group-prepend
+                      .input-group-text 종료일
+                    input.form-control.end-date(type="text" readOnly)
+            span.float-right(style="margin-right:100px;")
+              .form-inline
+                .form-group
+                  .input-group
+                    .input-group-prepend
+                      .input-group-text 합계
+                    input.form-control.result-sum(type="text" :value="round(sum,2)" readOnly)
+          .card-body.table-responsive
+            table.table.table-sm.table-responsive-sm.table-striped.table-hover.table-bordered
+              thead
+                //-tr
+                  th(colspan="2")
+                  th.bg-primary(colspan="9")
+                    img.c-icon.mr-2(src="/assets/img/pn-icon.png")
+                    | 피나클
+                  th.bg-success(colspan="6")
+                    img.c-icon.mr-2(src="/assets/img/bet365-icon.png")
+                    | 벳365
+                  th.bg-danger(colspan="2") 수익 / 배팅시간
+                tr
+                  th #
+                  th 대상
+                  th 시행자
+                  th 입/출금종류
+                  th 머니타입
+                  th 금액
+                  th 내용
+                  th 날짜
+              tbody
+                tr(v-for="item, i in list")
+                  td {{i+1}}
+                  td 
+                    a(:href="'#'+tab" style="cursor:pointer" v-on:click="reload(curPage, tab, {email:item.user.email})")
+                      |{{item.user.email}}
+                  td 
+                    a(:href="'#'+tab" style="cursor:pointer" v-on:click="reload(curPage, tab, {from:item.from})")
+                      |{{item.from||''}}
+                  td {{typeMap[item.type]}}
+                  td {{moneyMap[item.moneyName]}}
+                  td(:class="item.money<0?'text-success':'text-danger'") {{round(item.money,2)}}
+                  td(v-html="item.memo")
+                  td {{(new Date(item.createdAt)).toLocaleString()}}                  
+          nav
+            ul.pagination.justify-content-center(v-if="list.length>0")
+              li.page-item
+                a.page-link(v-if="startPage>0" href="#" aria-label="Previous" v-on:click="reload(startPage-1)")
+                  span(aria-hidden="true") «
+                  span.sr-only Previous
+              li.page-item(v-for="i in pages" :class="curPage==i?'active':''")
+                a.page-link(v-if="curPage==i") {{i+1}}
+                a.page-link(v-else :href="'#'+i" v-on:click="reload(i)") {{i+1}}
+              li.page-item
+                a.page-link(v-if="maxPage>endPage" href="#" aria-label="Next" v-on:click="reload(endPage+1)")
+                  span(aria-hidden="true") »
+                  span.sr-only Next

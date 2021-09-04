@@ -1,0 +1,40 @@
+script(src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js")
+script(src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js")
+script(src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.0/axios.min.js")
+//-script(src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.5/socket.io.min.js")
+script(src="https://unpkg.com/@drumtj/expgen@1.0.24/dist/expgen.js")
+//-script(src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.0/howler.core.min.js")
+//-script(src="https://unpkg.com/@popperjs/core@2")
+//-script(src="https://unpkg.com/@coreui/coreui/dist/js/coreui.min.js")
+//-<!--[if IE]><!-->
+//-script(src="https://unpkg.com/svgxuse@1.2.6/svgxuse.js")
+//-<!--<![endif]-->
+
+script(src="/socket.io/socket.io.js")
+script(src='/vendors/@coreui/coreui/dist/js/coreui.bundle.min.js')
+<!--[if IE]><!-->
+script(src='/vendors/@coreui/icons/js/svgxuse.min.js')
+script(src='/vendors/ladda/js/spin.min.js')
+script(src='/vendors/ladda/js/ladda.min.js')
+script(src='/js/libs/uuid.min.js')
+//-https://www.npmjs.com/package/js-datepicker
+script(src='/js/libs/datepicker.min.js')
+<!--<![endif]-->
+//-script(type="text/javascript").
+  function $(selector, dom){
+    return (dom||document).querySelector(selector);
+  }
+  function $$(selector, dom){
+    return (dom||document).querySelectorAll(selector);
+  }
+script(src="/js/config.js")
+script(src="/js/libs/randomColor.js")
+script(src="/js/util.js")
+script(src="/js/api.js")
+script(src="/js/modal.js")
+if user
+  script(src="/js/header.js")
+  script(src="/js/sidebar.js")
+  script(src="/js/socket.js")
+
+block scripts

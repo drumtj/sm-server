@@ -1,0 +1,71 @@
+extends _layout/default.pug
+
+block scripts
+  script(src="/js/depositHistory.js")
+  
+block append styles
+  style.
+    .table td, .table th {
+      text-align: center;   
+    }
+    .pmoney, .wallet {
+      text-align: right;
+    }
+
+block view
+  h1 입/출금기록
+  hr
+  .fade-in.pre-hide#app
+    .row
+      .col-md
+        ul.nav.nav-tabs
+          li.nav-item
+            a.nav-link(href="#0" v-on:click="loadList(0, 0)" :class="tab==0?'active':''") 출금내역
+          li.nav-item
+            a.nav-link(href="#1" v-on:click="loadList(0, 1)" :class="tab==1?'active':''") 입금내역
+        .card
+          .card-header
+            | 목록 ({{count}})
+          .card-body.table-responsive
+            table.table.table-sm.table-responsive-sm.table-hover.table-striped.table-bordered
+              thead
+                tr
+                  th #
+                  th 등록번호
+                  th 제목
+                  th 내용
+                  th bet365ID
+                  th 상태
+                  th 날짜
+              tbody
+                tr(v-for="item, i in list")
+                  td {{i+1}}
+                  td {{item.number}}
+                  td {{item.title}}
+                  td(v-if="item.status=='approval' && item.child")
+                    span.text-success {{item.child.data.bet365Id}}
+                    | /
+                    span.text-warning ${{item.child.data.depositMoney}}
+                    | / 
+                    span.text-info {{item.child.data.receiverEmail}}
+                  td(v-else)
+                    |{{item.detail}}
+                  td {{item.account.id}}
+                  td
+                    .badge(:class="statusClassMap[item.status]") {{statusMap[item.status]}}
+                  td {{(new Date(item.createdAt)).toLocaleString()}}                  
+          nav
+            ul.pagination.justify-content-center(v-if="list.length>0")
+              li.page-item
+                a.page-link(v-if="startPage>0" href="#" aria-label="Previous" v-on:click="loadList(startPage-1, tab)")
+                  span(aria-hidden="true") «
+                  span.sr-only Previous
+              li.page-item(v-for="i in pages" :class="curPage==i?'active':''")
+                a.page-link(v-if="curPage==i") {{i+1}}
+                a.page-link(v-else :href="'#'+i" v-on:click="loadList(i, tab)") {{i+1}}
+              li.page-item
+                a.page-link(v-if="maxPage>endPage" href="#" aria-label="Next" v-on:click="loadList(endPage+1, tab)")
+                  span(aria-hidden="true") »
+                  span.sr-only Next
+      
+      

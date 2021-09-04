@@ -1,0 +1,53 @@
+extends ../_layout/default.pug
+
+block scripts
+  script(src="/js/admin/setting.js")
+
+block view
+  .fade-in.pre-hide#app
+    h1
+      span.rm [관리자] 설정
+    hr
+    .card.setting-form
+      .card-header
+        //- .form-group.row
+        label.col-form-label 설정
+        .float-right
+          button.btn.btn-square.btn-info(v-on:click="save") 저장
+        .float-right
+          label(style="padding-right:5px;" v-if="backupTime" v-html="backupTime")
+          button.btn.btn-square.btn-warning(v-on:click="backup") 서버 백업
+          //- .col-md-9
+            input#optionName.form-control(placeholder="옵션 이름을 입력하세요" v-on:change="update" :value="optionName")
+            em#optionNameValidMessage.error.invalid-feedback 옵션 이름을 입력해주세요
+      .card-body
+        .form-group.row(v-for="form in forms")      
+          label.col-md-3.col-form-label(:for="form.key") {{form.name}}
+          .col-md-9(v-if="form.type=='number'")
+            .input-group
+              .input-group-prepend(v-if="form.prepend")
+                span.input-group-text(v-html="form.prepend")
+              input.form-control(v-on:change="update" :id="form.key" type="number" :name="form.key" :placeholder="form.placeholder?form.placeholder:''" :value="form.value")
+              .input-group-append(v-if="form.append")
+                span.input-group-text(v-html="form.append")
+            span.help-block(v-if="form.help") {{form.help}}
+          .col-md-9(v-if="form.type=='text'")
+            .input-group
+              .input-group-prepend(v-if="form.prepend")
+                span.input-group-text(v-html="form.prepend")
+              input.form-control(v-on:change="update" :id="form.key" type="text" :name="form.key" :placeholder="form.placeholder?form.placeholder:''" :value="form.value")
+              .input-group-append(v-if="form.append")
+                span.input-group-text(v-html="form.append")
+            span.help-block(v-if="form.help") {{form.help}}
+          .col-md-9(v-else-if="form.type=='select'")
+            select.form-control(v-on:change="update" :id="form.key" :name="form.key")          
+              option(v-for="opt in form.list" :value="opt.value" :selected="opt.value == form.value") {{opt.name}}
+            span.help-block(v-if="form.help") {{form.help}}
+          .col-md-9.col-form-label(v-else-if="form.type=='radio'")
+            .form-check(v-for="opt in form.list")              
+              input.form-check-input(v-on:change="update" :id="form.key+'_'+opt.value" type="radio" :checked="opt.value == form.value" :value="opt.value" :name="form.key")
+              label.form-check-label(:for="form.key+'_'+opt.value") {{opt.name}}
+          .col-md-9.col-form-label(v-else-if="form.type=='checkbox'")
+            .form-check.checkbox(v-for="opt in form.list")
+              input.form-check-input(v-on:change="update" :id="form.key+'_'+opt.value" type="checkbox" :checked="form.value[opt.value]")
+              label.form-check-label(:for="form.key+'_'+opt.value") {{opt.name}}

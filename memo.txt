@@ -1,0 +1,23 @@
+coreui demo
+https://coreui.io/demo/3.2.0/dark/
+
+coreui pug template
+https://github.com/coreui/coreui-free-bootstrap-admin-template 참고
+
+coreui doc
+https://coreui.io/docs/components/bootstrap/modal/#via-javascript
+
+coreui 아이콘
+https://icons.coreui.io/icons/
+
+프록시 아이피 등록 api
+https://luminati.io/doc/api#ip_mgmnt_api
+
+socket.io
+https://socket.io/docs/v3/rooms/
+
+vue js
+https://www.vuemastery.com/courses/intro-to-vue-js/components
+
+
+https://github.com/buunguyen/mongoose-deep-populate

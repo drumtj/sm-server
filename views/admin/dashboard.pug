@@ -1,0 +1,225 @@
+extends ../_layout/default.pug
+
+block styles
+  style.
+    .browser {
+      height: 250px;
+    }
+    .browser-logger{
+      overflow-y: auto;
+      padding: 2px;
+    }
+    .browser-logger::-webkit-scrollbar {
+      width: 6px;
+    }
+    .browser-logger::-webkit-scrollbar-thumb {
+      background-color: #2f3542;
+    }
+    .browser-logger::-webkit-scrollbar-track {
+      background-color: grey;
+    }
+    .scrollLock {
+      pointer-events: none;
+    }
+    .browser-logger>ul {
+      padding-inline-start: 5px;
+    }
+    .browser-logger>ul>li {
+      list-style: none;
+    }
+    .b-ip, .b-money {
+      padding-right: 10px;
+      font-size: 1.5em;
+      font-weight: 400;
+    }
+    .m-info {
+      position: relative;
+      left: -52px;
+      top: -16px;
+    }
+    .m-info {
+      position: relative;
+      left: -52px;
+      top: -27px;
+      white-space: nowrap;
+      width: 1px;
+    }
+    .pd5 {
+      padding: 5px !important;
+    }
+    .pd3 {
+      padding: 3px !important;
+    }
+    .btn-connect-account {
+      width: 90px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .b-money.sum {
+      color: #d1da4f;
+    }
+    .btn-refresh-startMoney {
+      transform: scale(0.5);
+      position:absolute;
+      top:-10px;
+    }
+    
+    .b-ip {
+      position: absolute;
+      top: -23px;
+    }
+    .proxy-icon-luminati {
+      background: url(/assets/img/luminati-icon.png) no-repeat;
+      width: 20px;
+      height: 20px;
+    }
+    .proxy-icon-ip {      
+      background: url(/assets/img/proxy-icon.png) no-repeat;
+      width: 33px;
+      height: 20px;
+    }
+    
+    .pc-header-left-group * {
+      margin-right: 4px;
+    }
+    .pc-name {      
+      font-size: 1.3em;
+      color: rgb(222, 215, 51) !important;
+      cursor: pointer;
+    }
+    .log-line {
+      border-bottom: dashed 1px gray;
+    }
+
+block scripts
+  script(src="/js/admin/dashboard.js")
+
+block view
+  .fade-in.pre-hide#app
+    .card.withdraw-form.pre-hide
+      .card-header
+        |출금할 금액을 입력하세요.          
+      .card-body
+        .input-group
+          .input-group-prepend
+            span.input-group-text $
+          input.form-control.withdraw-input(type="number" min="10")
+    //-.col-6.col-sm-4.col-md-2.col-xl.mb-3.mb-xl-0    
+    h1 [관리자] 원격 대시보드
+    hr
+    div
+      button.btn.btn-square.btn-reddit(type="button" v-on:click="sk_addProgram")
+        svg.c-icon.mr-2
+          use(xlink:href="/vendors/@coreui/icons/svg/brand.svg#cib-addthis")
+        |PC 추가
+      span.b-money.sum(style="margin-left:100px;" v-html="printSumHtmlAll(programs)")
+      span
+        .form-inline
+          .form-group
+            .input-group
+              .input-group-prepend
+                .input-group-text 유저
+              select.form-control.search-email(v-on:change="changeSearchEmail" :value="email?email:''")
+                option(value="") --------
+                option(v-for="user in users" :value="user.email") {{user.email}}
+          .form-group
+            .btn-group(role="group")
+              button.btn.btn-square.btn-primary(type="button" v-on:click="refreshMoneyAll()")
+                svg.c-icon.c-icon-lg
+                  use(xlink:href="/vendors/@coreui/icons/sprites/solid.svg#cis-reload")
+                | 전체 bet365머니 갱신
+              button.btn.btn-square.btn-success(type="button" v-on:click="startMatchAllProgram()")
+                | 전체 매칭시작
+              button.btn.btn-square.btn-warning(type="button" v-on:click="stopMatchAllProgram()")
+                | 전체 매칭중지
+              button.btn.btn-square.btn-info(type="button" v-on:click="openBrowserAll()")
+                | 전체 켜기
+              button.btn.btn-square.btn-secondary(type="button" v-on:click="closeBrowserAll()")
+                | 전체 끄기
+    hr
+    .card(v-for="program in programs" :data-pid="program._id" :class="program.connected?'border-warning':'border-secondary'")
+      .card-header
+        .btn-toolbar.justify-content-between
+          .pc-header-left-group.form-inline
+            .pc-name-group.form-inline(v-if="program.name")
+              //-span.input-group-text PC이름
+              label PC이름
+              span.pc-name.input-group-text(title="PC이름수정" v-on:click="changeInputMode(program._id)") {{program.name}}
+            input.form-control.pc-name-input(v-else type="text" placeholder="PC 이름을 입력하세요" :value="program._name" v-on:blur="onChangeName" :data-pid="program._id")
+            button.btn.btn-square.btn-secondary(type="button" v-on:click="copyPid(program._id)" :title="program._id")
+              | PC코드복사
+          .b-money.sum(v-html="printSumHtml(program)")
+          .btn-group(role="group")
+            button.btn.btn-square.btn-primary(type="button" v-on:click="refreshMoneyAll(program)")
+              svg.c-icon.c-icon-lg
+                use(xlink:href="/vendors/@coreui/icons/sprites/solid.svg#cis-reload")
+              | 전체 bet365머니 갱신
+            button.btn.btn-square.btn-success(type="button" v-on:click="startMatchAllBrowser(program)")
+              | 전체 매칭시작
+            button.btn.btn-square.btn-warning(type="button" v-on:click="stopMatchAllBrowser(program)")
+              | 전체 매칭중지
+            button.btn.btn-square.btn-info(type="button" v-on:click="openBrowserAll(program)")
+              | 전체 켜기
+            button.btn.btn-square.btn-secondary(type="button" v-on:click="closeBrowserAll(program)")
+              | 전체 끄기            
+          .btn-group(role="group")
+            button.btn.btn-square.btn-behance(type="button" v-on:click="sk_addBrowser(program._id)")
+              svg.c-icon
+                use(xlink:href="/vendors/@coreui/icons/svg/brand.svg#cib-addthis")
+              | 브라우져 추가
+            button.btn.btn-square.btn-danger(type="button" v-on:click="sk_removeProgram(program._id)")
+              svg.c-icon
+                use(xlink:href="/vendors/@coreui/icons/svg/solid.svg#cis-trash")
+              | PC 제거
+      .card-body
+        .row
+          .col-sm-6.col-md-4(v-for="browser in program.browsers")
+            .card.browser(:class="browserClass(browser)")
+              header.card-header.pd5
+                .btn-toolbar.justify-content-between
+                  .b-header.btn-group(role="group")
+                    span.b-ip {{browser.ip?'['+browser.ip+']':''}}
+                    button.btn.btn-square.btn-ghost-secondary.pd3(type="button" v-on:click.stop="openProxyModal(program._id, browser._id)")
+                      .proxy-icon-luminati(v-if="!browser.proxy" title="luminati 프록시")
+                      .proxy-icon-ip(v-else :title="'고정IP 프록시 ' + printProxy(browser.proxy)")
+                    svg.icon-svg(v-if="browser.account" style="margin-top: 9px; width: 30px;height: 17px;")
+                      use(:xlink:href="'/vendors/@coreui/icons/sprites/flag.svg#cif-'+browser.account.country.toLowerCase()")
+                    button.btn.btn-square.btn-ghost-success.pd5.btn-connect-account(type="button" :title="browser.account ? browser.account.id : '계정연결필요'" v-on:click.stop="openAccountModal(program._id, browser._id)" :disabled="browser.used")
+                      | {{browser.account ? browser.account.id : "계정연결"}}
+                    button.btn.btn.btn-square.pd5(:class="(browser.option && browser.option.permission=='admin') ? 'btn-ghost-info' : 'btn-ghost-warning'" type="button" v-on:click.stop="openOptionModal(program._id, browser._id)")
+                      | {{browser.option ? browser.option.name : "옵션선택"}}
+                    span.b-money ${{browser.account ? Math.floor(browser.account.money) : 0}}
+                    div.m-info(title="수익계산")
+                      span(v-html="printProfitHtml(browser)" style="background:rgb(0 0 0 / 61%);")
+                      button.btn.btn-square.btn-primary.btn-refresh-startMoney(:class="browser._id" type="button" title="수익계산 초기화" style="transform: scale(0.5); position:absolute; top:-8px;" v-on:click.stop="resetProfitInfo(browser)")
+                        svg.c-icon.c-icon-lg
+                          use(xlink:href="/vendors/@coreui/icons/sprites/solid.svg#cis-reload")
+                    span
+                      button.btn.btn-sm.btn-primary.btn-refresh-money.pd3(type="button" title="머니갱신" :data-bid="browser._id" v-on:click.stop="refreshMoney(program, browser)")
+                        svg.c-icon.c-icon-lg
+                          use(xlink:href="/vendors/@coreui/icons/sprites/solid.svg#cis-reload")
+                    span
+                      button.btn.btn-sm.btn-primary.btn-withdraw-money.pd3(type="button" title="출금" :data-bid="browser._id" v-on:click.stop="openWithdrawModal(program, browser)")
+                        svg.c-icon.c-icon-lg
+                          use(xlink:href="/vendors/@coreui/icons/sprites/brand.svg#cib-cashapp")
+                  .btn-group(role="group")
+                    button.btn.btn-square.btn-warning.pd5(type="button" v-if="browser.isMatching" v-on:click.stop="stopMatch(program, browser)")
+                      | 매칭중지
+                    button.btn.btn-square.btn-success.pd5(type="button" v-else v-on:click.stop="startMatch(program, browser)")
+                      | 매칭시작
+                  .btn-group(role="group")
+                    //-button.btn.btn-square.btn-secondary(type="button" v-if="!browser.isOn&&user.admin" v-on:click="sk_openBrowser(program._id, browser._id, true)")
+                      | 체크기
+                    button.btn.btn-square.btn-info.pd5(type="button" v-if="browser.isOn" v-on:click.stop="sk_closeBrowser(program._id, browser._id)")
+                      | 끄기
+                    button.btn.btn-square.btn-secondary.pd5(type="button" v-else v-on:click.stop="sk_openBrowser(program._id, browser._id)")
+                      | 켜기
+                    button.btn.btn-square.btn-danger.pd5(type="button" v-on:click.stop="sk_removeBrowser(program._id, browser._id)")
+                      svg.c-icon
+                        use(xlink:href="/vendors/@coreui/icons/svg/solid.svg#cis-trash")
+                      | 제거
+              .card-body.browser-logger.scroll.scrollLock
+                ul.logger-ul
+                  //-li(v-for="log in browser.logs")
+                    div.log-line(:class="log.data?'text-'+log.data.type:''" v-html="logToHtml(log)")

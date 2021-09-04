@@ -1,0 +1,140 @@
+  
+script.
+  var link = "#{link}";
+  var user = !{JSON.stringify({email:user.email, admin, master:user.master})};
+  var pages = !{JSON.stringify(pages)};
+  var config = !{JSON.stringify(config)};
+style.
+  .nav-badge {
+    //- position: unset !important;
+    position: absolute !important;
+    left: 80% !important;
+    top: 50% !important;
+  }
+
+header.c-header.c-header-light.c-header-fixed.c-header-with-subheader
+  button.c-header-toggler.c-class-toggler.d-lg-none.mfe-auto(type="button" data-target="#sidebar" data-class="c-sidebar-show")
+    svg.c-icon.c-icon-lg
+      use(xlink:href="/vendors/@coreui/icons/sprites/free.svg#cil-menu")
+  //- a.c-header-brand.d-lg-none(href="#")
+    //-img(width="118" height="46" src="assets/img/logo2.png")
+    //- svg(width="118" height="46" alt="CoreUI Logo")
+      use(xlink:href="assets/brand/coreui.svg#full")
+  //- button.c-header-toggler.c-class-toggler.mfs-3.d-md-down-none(type="button" data-target="#sidebar" data-class="c-sidebar-lg-show" responsive="true")
+    svg.c-icon.c-icon-lg
+      use(xlink:href="/vendors/@coreui/icons/sprites/free.svg#cil-menu")        
+  ul.c-header-nav.d-md-down-none.pre-hide#menu    
+    li.c-header-nav-item.px-2(v-for="page in pages")
+      a.c-header-nav-link(:href="page.link==link?'#':page.link" :class="page.link==link?'text-info':page.master?'text-success':page.admin?'text-warning':''" v-on:click="reset(page.link)")
+        | {{page.name}}
+        span.badge.badge-pill.badge-danger.nav-badge(v-if="page.new||page.badge") {{page.badge||'New'}}
+  //- ul.c-header-nav.d-md-down-none#menu
+    each n,i in pages
+      li.c-header-nav-item.px-3
+        if pages[i].link == link
+          a.c-header-nav-link.text-info(href='#') #{pages[i].name}
+        else
+          if pages[i].master
+            a.c-header-nav-link.text-success(href=pages[i].link) #{pages[i].name}
+          else if pages[i].admin
+            a.c-header-nav-link.text-warning(href=pages[i].link) #{pages[i].name}
+          else
+            a.c-header-nav-link(href=pages[i].link) #{pages[i].name}
+  ul.c-header-nav.ml-auto.mr-4.pre-hide#rightHeader
+    //-li.c-header-nav-item.d-md-down-none.mx-2
+      a.c-header-nav-link(href="#")
+        svg.c-icon
+          use(xlink:href="vendors/@coreui/icons/sprites/free.svg#cil-bell")
+    //-li.c-header-nav-item.d-md-down-none.mx-2
+      a.c-header-nav-link(href="#")
+        svg.c-icon
+          use(xlink:href="vendors/@coreui/icons/sprites/free.svg#cil-list-rich")
+    //-li.c-header-nav-item.d-md-down-none.mx-2
+      a.c-header-nav-link(href="#")
+        svg.c-icon
+          use(xlink:href="vendors/@coreui/icons/sprites/free.svg#cil-envelope-open")
+    //- li.c-header-nav-item.mx-2
+      a.c-header-nav-link(href="#")
+        .c-money.c-money-site
+          img.c-icon.mr-2(src="/assets/img/pn-icon.png")
+          //-svg.c-icon.mr-2
+            use(xlink:href="vendors/@coreui/icons/sprites/linear.svg#cil-dollar")
+          span {{printMoney(money.site)}}
+    li.c-header-nav-item.mx-2
+      a.c-header-nav-link(href="#")
+        .c-money.c-money-wallet
+          svg.c-icon.mr-2
+            use(xlink:href="/vendors/@coreui/icons/sprites/linear.svg#cil-wallet")
+          span {{printMoney(money.wallet)}}
+    //- li.c-header-nav-item.mx-2
+      a.c-header-nav-link(href="#")
+        .c-money.c-money-bet365
+          img.c-icon.mr-2(src="/assets/img/bet365-icon.png")
+          //-svg.c-icon.mr-2
+            use(xlink:href="vendors/@coreui/icons/sprites/linear.svg#cil-money")
+          span {{printMoney(money.bet365)}}
+    li.c-header-nav-item.dropdown        
+      a.c-header-nav-link(data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false")          
+        .c-avatar
+          //-img.c-avatar-img(src="assets/img/avatars/6.jpg" alt="user@email.com")            
+          svg.c-icon.mr-2
+            use(xlink:href="/vendors/@coreui/icons/sprites/free.svg#cil-user")
+        span#email.d-sm-down-none= user.email
+      .dropdown-menu.dropdown-menu-right.pt-0
+        .dropdown-header.bg-light.py-2
+          strong 계정
+        //-a.dropdown-item(href="#")
+          svg.c-icon.mr-2
+            use(xlink:href="vendors/@coreui/icons/sprites/free.svg#cil-bell")
+          |  Updates
+          span.badge.badge-info.ml-auto 42
+        //-a.dropdown-item(href="#")
+          svg.c-icon.mr-2
+            use(xlink:href="/vendors/@coreui/icons/sprites/free.svg#cil-envelope-open")
+          |  우편
+          span.badge.badge-success.ml-auto 42
+        //-a.dropdown-item(href="#")
+          svg.c-icon.mr-2
+            use(xlink:href="vendors/@coreui/icons/sprites/free.svg#cil-task")
+          |  Tasks
+          span.badge.badge-danger.ml-auto 42
+        //-a.dropdown-item(href="#")
+          svg.c-icon.mr-2
+            use(xlink:href="vendors/@coreui/icons/sprites/free.svg#cil-comment-square")
+          |  Comments
+          span.badge.badge-warning.ml-auto 42
+        //-.dropdown-header.bg-light.py-2
+          strong Settings
+        //-a.dropdown-item(href="#")
+          svg.c-icon.mr-2
+            use(xlink:href="vendors/@coreui/icons/sprites/free.svg#cil-user")
+          |  Profile
+        //-a.dropdown-item(href="#")
+          svg.c-icon.mr-2
+            use(xlink:href="vendors/@coreui/icons/sprites/free.svg#cil-settings")
+          |  Settings
+        //-a.dropdown-item(href="#")
+          svg.c-icon.mr-2
+            use(xlink:href="vendors/@coreui/icons/sprites/free.svg#cil-credit-card")
+          |  Payments
+          span.badge.badge-secondary.ml-auto 42
+        //-a.dropdown-item(href="#")
+          svg.c-icon.mr-2
+            use(xlink:href="vendors/@coreui/icons/sprites/free.svg#cil-file")
+          |  Projects
+          span.badge.badge-primary.ml-auto 42
+        //-.dropdown-divider
+        //-a.dropdown-item(href="#")
+          svg.c-icon.mr-2
+            use(xlink:href="vendors/@coreui/icons/sprites/free.svg#cil-lock-locked")
+          |  Lock Account
+        //- a.dropdown-item(v-if="user && user.admin" href="/download/test.zip")
+          svg.c-icon.mr-2
+            use(xlink:href="/vendors/@coreui/icons/sprites/free.svg#cil-lock-locked")
+          |  다운로드          
+        a.dropdown-item(href="/logout")
+          svg.c-icon.mr-2
+            use(xlink:href="/vendors/@coreui/icons/sprites/free.svg#cil-account-logout")
+          |  로그아웃
+  //-.c-subheader.px-3
+    include ./../_partials/breadcrumb.pug

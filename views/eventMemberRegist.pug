@@ -1,0 +1,218 @@
+extends _layout/pages_normal.pug
+
+block append styles
+  style.
+    #image-container img {
+      margin: 3px;
+      max-width: 100px;
+      /* max-height: 100px; */
+    }
+    .icon-label {
+      margin-left:6px;
+      width: 90px;
+      /* text-justify: auto; */
+      text-align: justify;      
+      /* justify-content: space-around;       */
+    }
+    .hide {
+      display: none;
+    }
+        
+    :root {
+      --color: rebeccapurple;
+      --disabled: #959495;
+    }
+
+    *,
+    *:before,
+    *:after {
+      box-sizing: border-box;
+    }
+
+    .checkbox {
+      display: grid;
+      grid-template-columns: -webkit-min-content auto;
+      grid-template-columns: min-content auto;
+      grid-gap: 0.5em;
+      /* font-size: 2rem; */
+      color: var(--color);
+    }
+    .checkbox--disabled {
+      color: var(--disabled);
+    }
+
+    .checkbox__control {
+      display: inline-grid;
+      width: 1em;
+      height: 1em;
+      border-radius: 0.25em;
+      border: 0.1em solid currentColor;
+    }
+    .checkbox__control svg {
+      transition: transform 0.1s ease-in 25ms;
+      transform: scale(0);
+      transform-origin: bottom left;
+    }
+
+    .checkbox__input {      
+      margin-top: 4px;
+      display: grid;
+      grid-template-areas: "checkbox";
+    }
+    .checkbox__input > * {
+      grid-area: checkbox;
+    }
+    .checkbox__input input {
+      opacity: 0;
+      width: 1em;
+      height: 1em;
+    }
+    .checkbox__input input:focus + .checkbox__control {
+      box-shadow: 0 0 0 0.05em #fff, 0 0 0.15em 0.1em currentColor;
+    }
+    .checkbox__input input:checked + .checkbox__control svg {
+      transform: scale(1);
+    }
+    .checkbox__input input:disabled + .checkbox__control {
+      color: var(--disabled);
+    }
+
+
+block view
+  .container
+    .row.justify-content-center
+      .col-md-8.col-sm-12
+        .card
+          .card-body
+            img(src="/assets/img/skill_bit_logo.jpg" width="100%")            
+            //- p.text-muted 가입하실 계정 정보를 입력하세요
+            //-.input-group.mb-3
+              .input-group-prepend
+                span.input-group-text
+                  svg.c-icon
+                    use(xlink:href="vendors/@coreui/icons/sprites/free.svg#cil-user")
+              input.form-control(type='text', placeholder='Username')
+            .page-1
+              h2.title(style="margin:15px;") 1단계: 가입정보 입력
+              .input-group.mb-3
+                .input-group-prepend
+                  span.input-group-text
+                    svg.c-icon
+                      use(xlink:href="/vendors/@coreui/icons/sprites/free.svg#cil-user")
+                    .icon-label 이름
+                input.form-control#form-name(type='text')
+              .input-group.mb-3
+                .input-group-prepend
+                  span.input-group-text
+                    svg.c-icon
+                      use(xlink:href="/vendors/@coreui/icons/sprites/free.svg#cil-calendar")
+                    .icon-label 생년월일
+                input.form-control#form-date(type="date")
+              .input-group.mb-3
+                .input-group-prepend
+                  span.input-group-text
+                    svg.c-icon
+                      use(xlink:href="/vendors/@coreui/icons/sprites/free.svg#cil-screen-smartphone")
+                    .icon-label 핸드폰
+                input.form-control#form-phone(type="tel" placeholder="010-1234-5678" value="010-")
+              span 이메일은 인증을 위해 필요합니다.
+              .input-group.mb-3
+                .input-group-prepend
+                  span.input-group-text
+                    svg.c-icon
+                      use(xlink:href="/vendors/@coreui/icons/sprites/free.svg#cil-envelope-open")
+                    .icon-label 이메일
+                input.form-control#form-email(type='email')
+              span 계좌번호는 보수 지급을 위해 필요합니다.
+              .input-group.mb-3
+                .input-group-prepend
+                  span.input-group-text
+                    svg.c-icon
+                      use(xlink:href="/vendors/@coreui/icons/sprites/free.svg#cil-bank")
+                    .icon-label 은행
+                select#bank-select
+                  - var list = ["기타", "카카오뱅크", "국민은행", "기업은행", "농협은행", "신한은행", "산업은행", "우리은행", "한국씨티은행", "하나은행", "SC제일은행", "경남은행", "광주은행", "대구은행", "부산은행", "산림조합중앙회", "저축은행", "새마을금고", "수협은행", "신협중앙회", "우체국", "전북은행", "제주은행"];
+                  each bname,i in list
+                    option(value=bname, selected= i==0) #{bname}
+                input.form-control#form-bank(type="text" placeholder="직접입력")
+              .input-group.mb-3
+                .input-group-prepend
+                  span.input-group-text
+                    svg.c-icon
+                      use(xlink:href="/vendors/@coreui/icons/sprites/linear.svg#cil-key-alt")
+                    .icon-label 계좌번호
+                input.form-control#form-bank-account(type="tel")
+              //- .input-group.mb-3
+                .input-group-prepend
+                  span.input-group-text
+                    svg.c-icon
+                      use(xlink:href="/vendors/@coreui/icons/sprites/free.svg#cil-lock-locked")
+                    .icon-label 비밀번호
+                input.form-control#form-pw(type='password' maxlength="13")
+              .input-group.mb-3
+                .input-group-prepend
+                  span.input-group-text
+                    svg.c-icon
+                      use(xlink:href="/vendors/@coreui/icons/sprites/free.svg#cil-envelope-open")
+                    .icon-label 추천인 이메일
+                input.form-control#form-from-email(type='email' placeholder="선택사항")
+              //- .input-group.mb-4
+                .input-group-prepend
+                  span.input-group-text
+                    svg.c-icon
+                      use(xlink:href="/vendors/@coreui/icons/sprites/free.svg#cil-lock-locked")
+                input.form-control.border.border-danger#form-pw2(type='password', placeholder='Repeat password')
+              //- div
+                button.btn.btn-block#btn-album(type='button' style="background:#38c173; color:#fff; font-size: 1rem;") 앨범
+                button.btn-block.capture1.btn#btn-camera(type='button' style="background:#3883c1; color:#fff; font-size: 1rem;") 카메라
+              p.text-muted 사진 업로드
+              .input-group.mb-4
+                .input-group-prepend
+                  span.input-group-text
+                    |신분증 앞
+                input.form-control#form-picture1(type="file" accept="image/*")
+              .input-group.mb-4
+                .input-group-prepend
+                  span.input-group-text
+                    |신분증 뒤
+                input.form-control#form-picture2(type="file" accept="image/*")
+              .input-group.mb-4
+                .input-group-prepend
+                  span.input-group-text
+                    |신분증들고 본인사진 (얼굴, 신분증 명확하게)
+                input.form-control#form-picture3(type="file" accept="image/*")
+              .col-md-9
+                #image-container
+              //- .form-group.row
+                .col-md-3.col-form-label(for="file-multiple-input") 사진
+                .col-md-9
+                  input#file-multiple-input(type="file" name="file-multiple-input" multiple="" accept="image/*")
+                .col-md-9
+                  #image-container
+              p
+                label.checkbox
+                  span.checkbox__input
+                    input#form-allow-check(type="checkbox" name="checkbox")
+                    span.checkbox__control
+                      svg(xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' aria-hidden="true" focusable="false")
+                        path(fill='none' stroke='currentColor' stroke-width='3' d='M1.73 12.91l6.37 6.37L22.79 4.59')
+                  span.radio__label
+                    |개인정보 수집 및 이용 동의
+                    span(style="color:rgb(0, 190, 47);font-size:8pt") (필수)
+              button.btn.btn-block#btn-register(type='button' style="background:#872166; color:#fff; font-size: 2rem;") 가입신청
+            .page-2.hide
+              h2.title(style="margin:15px;") 2단계: 인증하기
+              div(style="text-align: center;")
+                p.text-muted 카카오톡 채널을 추가하고 인증 완료해주세요.
+                a(href="http://pf.kakao.com/_jJeCs" target="_blank")
+                  img(src="/assets/img/join_talk.jpg")
+          //-.card-footer.p-4
+            .row
+              .col-6
+                button.btn.btn-block.btn-facebook(type='button')
+                  span facebook
+              .col-6
+                button.btn.btn-block.btn-twitter(type='button')
+                  span twitter
+block scripts
+  script(src="/js/eventMemberRegist.js")

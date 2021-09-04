@@ -1,0 +1,100 @@
+extends _layout/default.pug
+
+//-block styles
+
+block append styles
+  style.
+    .requested-deposit-cover {
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.36);
+      color: white;
+      position: absolute;
+      left: 0px;
+      top: 0px;
+      font-size: 18pt;
+      text-align: center;
+      padding-top: 15px;
+    }
+    .price {
+      color:yellow;
+      font-weight:400;
+    }
+    .table td, .table th {
+      text-align: center;   
+    }
+    .rm {
+      margin-right: 20px;
+    }
+    .account-link {
+      display: inline;
+    }
+
+block scripts
+  script(src="/js/accountManager.js")
+
+block view
+  .fade-in.pre-hide#app    
+    h1
+      span.rm 계정관리
+      .btn-group
+        button.btn.btn-square.btn-vimeo(type="button" v-on:click="openAccountStoreModal")
+          svg.c-icon.mr-2
+            use(xlink:href="/vendors/@coreui/icons/svg/brand.svg#cib-addthis")
+          |계정발급
+        button.btn.btn-square.btn-secondary(type="button" v-on:click="refreshConnectState")
+          svg.c-icon.mr-2
+            use(xlink:href="/vendors/@coreui/icons/sprites/solid.svg#cis-reload")
+          |연결상태갱신
+    hr
+    h2
+      |{{accounts.length}} 개
+    table#storeTable.table.table-responsive-sm.table-bordered.table-striped.table-sm
+      thead
+        tr
+          th 아이디
+          th 국가
+          th 가격(발급비용 + 충전금액)
+          th 발급
+      tbody.account-table-body
+        tr(v-for="account in storeAccounts")
+          td {{account.id}}
+          td
+            svg.icon-svg(style="width: 30px;height: 17px;")
+              use(:xlink:href="'/vendors/@coreui/icons/sprites/flag.svg#cif-'+account.country.toLowerCase()")
+            |{{getCountryName(account)}}
+          td
+            span.price
+              |${{price + account.money}}
+          td
+            button.btn.btn-sm.btn-square.btn-success.btn-account(type="button" v-on:click="buyAccount(account)")
+              |발급
+    .row
+      .col-sm-3.col-md-3(v-for="account in accounts")
+        .card(:class="getBorderClass(account._id)")
+          .card-body(:class="getDepositClass(account._id)")
+            .btn-toolbar.justify-content-between
+              //-.requested-deposit-cover(v-if="account.requestedDeposit")
+                | 출금요청 중
+              svg.c-icon(v-if="account.browser" v-on:click="disconnect(account)" style="cursor:pointer;")
+                use(xlink:href="/vendors/@coreui/icons/svg/solid.svg#cis-link-intact")
+              .aid
+                span(style="font-size:14pt;color:rgb(220, 228, 56)") [{{account.number}}]
+                span(style="margin-left:4px") 
+                  a.nav-link.account-link(href="#" v-on:click="openAccountModal(account)")
+                    svg.icon-svg(style="width: 30px;height: 17px;")
+                      use(:xlink:href="'/vendors/@coreui/icons/sprites/flag.svg#cif-'+account.country.toLowerCase()")
+                    |{{account.id}}
+              .bet-count
+                span 배팅: 
+                span.badge.badge-pill.badge-secondary {{account.betCount||0}}
+              .money 잔액: ${{comma(account.money) || 0}}
+              .btn-group
+                //-button.btn.btn-sm.btn-square.btn-secondary(v-if="!account.requestedDeposit" type="button" v-on:click="deposit(account._id)")
+                  svg.c-icon
+                    use(xlink:href="/vendors/@coreui/icons/svg/solid.svg#cis-dollar-circle")
+                  | 출금요청
+                button.btn.btn-sm.btn-square.btn-danger(v-if="!account.requestedDeposit" type="button" v-on:click="removeAccount(account._id)")
+                  svg.c-icon
+                    use(xlink:href="/vendors/@coreui/icons/svg/solid.svg#cis-trash")
+                  | 제거

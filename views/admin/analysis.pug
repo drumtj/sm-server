@@ -1,0 +1,265 @@
+extends ../_layout/default.pug
+
+block append styles
+  link(href="/vendors/@coreui/chartjs/css/coreui-chartjs.css" rel="stylesheet")
+  style.
+    .table td, .table th {
+      text-align: center;   
+    }
+    .pmoney, .wallet {
+      text-align: right;
+    }
+    .input-group>input:not(.date) {
+      width: 110px !important;
+    }
+    .start-date, .end-date {
+      width: 126px !important;
+    }
+    .graph {
+      display: none;
+    }
+    .graph.active {
+      display: block;
+    }
+
+block scripts
+  script(src='/vendors/@coreui/utils/js/coreui-utils.js')
+  script(src='https://cdn.jsdelivr.net/npm/chart.js')
+  //-script(src='/vendors/@coreui/chartjs/js/coreui-chartjs.bundle.js')
+  script(src='/js/admin/analysis.js')
+
+block view
+  h1 [관리자] 분석
+  hr
+  .fade-in.pre-hide#app
+    .row
+      .col-md
+        .card
+          .card-header
+            div
+              //- span 목록 ({{count}})
+              span(style="margin-left:10px")
+                .btn-group
+                  button.btn.btn-sm.btn-primary(type="button" v-on:click="reload")
+                    svg.c-icon.c-icon-lg
+                      use(xlink:href="/vendors/@coreui/icons/sprites/solid.svg#cis-reload")
+                  button.btn.btn-sm.btn-secondary(type="button" v-on:click="resetReload")
+                    |검색조건 초기화
+              hr
+              .form-row
+                .form-inline
+                  .form-group
+                    .input-group
+                      .input-group-prepend
+                        .input-group-text 시작일
+                      input.form-control.date.start-date(type="text" readOnly)
+                  .form-group
+                    .input-group
+                      .input-group-prepend
+                        .input-group-text 종료일
+                      input.form-control.date.end-date(type="text" readOnly)
+                  .form-group
+                    .input-group
+                      .input-group-prepend
+                        .input-group-text 배당조건1
+                      input.form-control.search-odds1(type="number" step="0.1" min="1.1" :value="odds1?odds1:''" v-on:change="changeSearchOdds1" style="width:70px !important;")
+                      .input-group-append
+                        select.form-control.search-oddscon1(v-on:change="changeSearchOddsCon1" :value="oddsCon1||''")
+                          option(value="") --------
+                          option(value="<") 보다 작음
+                          option(value="<=") 보다 작거나 같음
+                          option(value="==") 같음
+                          option(value=">") 보다 큼
+                          option(value=">=") 보다 크거나 같음
+                          option(value="!=") 같지않음
+                  .form-group
+                    .input-group
+                      .input-group-prepend
+                        .input-group-text 배당조건2
+                      input.form-control.search-odds2(type="number" step="0.1" min="1.1" :value="odds2?odds2:''" v-on:change="changeSearchOdds2" style="width:70px !important;")
+                      .input-group-append
+                        select.form-control.search-oddscon2(v-on:change="changeSearchOddsCon2" :value="oddsCon2||''")
+                          option(value="") --------
+                          option(value="<") 보다 작음
+                          option(value="<=") 보다 작거나 같음
+                          option(value="==") 같음
+                          option(value=">") 보다 큼
+                          option(value=">=") 보다 크거나 같음
+                          option(value="!=") 같지않음
+                  .form-group
+                    button.btn.btn-primary(type="button" v-on:click="reload(0)") 찾기
+              //- span.float-right(style="margin-right:54px")
+              hr
+              .form-row
+                .col-2
+                  label 종목
+                  #select-sports
+                .col-2
+                  label 배팅타입
+                  #select-bettype
+                //- .col-2
+                  label 수익기준
+                  #select-profit-main
+                .col-2
+                  label 유저
+                  #select-user            
+          .card-body.table-responsive
+    //- .row
+      .col-md
+        ul.nav.nav-tabs
+          li.nav-item
+            a.nav-link(href="#0" v-on:click="reload({graphType:'line'})" :class="graphType=='line'?'active':''") 선형
+          li.nav-item 
+            a.nav-link(href="#1" v-on:click="reload({graphType:'radar'})" :class="graphType=='radar'?'active':''") 방사형
+    .row
+      .col-md.graph(:class="graphType=='line'?'active':''")
+        .card
+          .card-body
+            div
+              .d-flex.justify-content-between
+                div
+                  h4.card-title.mb-0 투자금/수익 그래프
+                  //- .small.text-mutedSeptember 2019
+                .btn-toolbar.d-none.d-md-block(role="toolbar" aria-label="Toolbar with buttons")
+                  .btn-group.btn-group-toggle.mx-3(data-toggle="buttons")
+                    label.btn.btn-outline-secondary.active(@click="reload({period:'day'})")
+                      input(id="option1" type="radio" name="options" autocomplete="off" checked="")
+                      |Day
+                    label.btn.btn-outline-secondary(@click="reload({period:'week'})")
+                      input(id="option2" type="radio" name="options" autocomplete="off")
+                      |Week
+                    label.btn.btn-outline-secondary(@click="reload({period:'month'})")
+                      input(id="option3" type="radio" name="options" autocomplete="off")
+                      |Month
+                    //- label.btn.btn-outline-secondary(@click="reload({period:'year'})")
+                      input(id="option4" type="radio" name="options" autocomplete="off")
+                      |Year                          
+                  //- button.btn.btn-primary(type="button")
+                    svg.c-icon
+                      use(xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-cloud-download")          
+              .c-chart-wrapper(style="height:300px;margin-top:40px;")
+                canvas.chart(id="mainChart" height="300")
+          .card-footer
+            .row.text-center
+              .col-sm-12.col-md.mb-sm-2.mb-0
+                .text-muted 총 수익
+                strong.text-success ${{totalRealProfit}}
+              .col-sm-12.col-md.mb-sm-2.mb-0
+                .text-muted 총 투자금
+                strong.text-danger ${{totalRealStake}}
+              .col-sm-12.col-md.mb-sm-2.mb-0
+                .text-muted 총 수익률
+                strong {{totalRealProfitP}} ({{totalRealProfitCount}})
+        .card
+          .card-body
+            div
+              .d-flex.justify-content-between
+                div
+                  h4.card-title.mb-0 수익흐름 그래프
+                  //- .small.text-mutedSeptember 2019                  
+              .c-chart-wrapper(style="height:300px;margin-top:40px;")
+                canvas.chart(id="profitFlowChart" height="300")
+          .card-footer
+            .row.text-center
+              .col-sm-12.col-md.mb-sm-2.mb-0
+                .text-muted 총 수익률
+                strong {{totalProfitFlowP}} ({{totalProfitFlowCount}})              
+        .card
+          .card-body
+            div
+              .d-flex.justify-content-between
+                div
+                  h4.card-title.mb-0 배당별 수익 그래프        
+              .c-chart-wrapper(style="height:300px;margin-top:40px;")
+                canvas.chart(id="oddsChart" height="300")
+            //- div
+              .d-flex.justify-content-between
+                div
+                  h4.card-title.mb-0 배팅금액별 그래프
+                  //- .small.text-mutedSeptember 2019                  
+              .c-chart-wrapper(style="height:300px;margin-top:40px;")
+                canvas.chart(id="stakeChart" height="300")
+        .card
+          .card-body
+            div
+              .d-flex.justify-content-between
+                div
+                  h4.card-title.mb-0 종목별 수익 그래프
+              .c-chart-wrapper(style="height:300px;margin-top:40px;")
+                canvas.chart(id="sportsChart" height="300")          
+        .card
+          .card-body
+            div
+              .d-flex.justify-content-between
+                div
+                  h4.card-title.mb-0 배팅타입별 수익 그래프
+              .c-chart-wrapper(style="height:300px;margin-top:40px;")
+                canvas.chart(id="betTypeChart" height="300")
+          .card-footer
+            .row.text-center
+              .col-sm-12.col-md.mb-sm-2.mb-0(v-for="betType in betTypeList")
+                .text-muted
+                strong {{betType}} ${{comma(betTypeSum[betType])}}({{betTypeCount[betType] + period}})
+          //- .card-footer
+            .row.text-center
+              .col-sm-12.col-md.mb-sm-2.mb-0
+                .text-muted Visits
+                strong 29.703 Users (40%)
+                .progress.progress-xs.mt-2
+                  .progress-bar.bg-gradient-success(role="progressbar" style="width: 40%" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100")            
+              .col-sm-12.col-md.mb-sm-2.mb-0
+                .text-muted Unique
+                strong 24.093 Users (20%)
+                .progress.progress-xs.mt-2
+                  .progress-bar.bg-gradient-info(role="progressbar" style="width: 20%" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100")            
+              .col-sm-12.col-md.mb-sm-2.mb-0
+                .text-muted Pageviews
+                strong 78.706 Views (60%)
+                .progress.progress-xs.mt-2
+                  .progress-bar.bg-gradient-warning(role="progressbar" style="width: 60%" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100")
+              .col-sm-12.col-md.mb-sm-2.mb-0
+                .text-muted New Users
+                strong 22.123 Users (80%)
+                .progress.progress-xs.mt-2
+                  .progress-bar.bg-gradient-danger(role="progressbar" style="width: 80%" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100")            
+              .col-sm-12.col-md.mb-sm-2.mb-0
+                .text-muted Bounce Rate
+                strong 40.15%
+                .progress.progress-xs.mt-2
+                  .progress-bar(role="progressbar" style="width: 40%" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100")                
+      .col-md.graph(:class="graphType=='radar'?'active':''")
+        .card
+          .card-body
+            div
+              .d-flex.justify-content-between
+                div
+                  h4.card-title.mb-0 종목기준    
+              .c-chart-wrapper(style="height:500px;margin-top:40px;")
+                canvas.chart(id="sportsRadarChart" height="500")
+          .card-footer
+            //- .row.text-center
+              .col-sm-12.col-md.mb-sm-2.mb-0
+                .text-muted Visits
+                strong 29.703 Users (40%)
+                .progress.progress-xs.mt-2
+                  .progress-bar.bg-gradient-success(role="progressbar" style="width: 40%" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100")            
+              .col-sm-12.col-md.mb-sm-2.mb-0
+                .text-muted Unique
+                strong 24.093 Users (20%)
+                .progress.progress-xs.mt-2
+                  .progress-bar.bg-gradient-info(role="progressbar" style="width: 20%" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100")            
+              .col-sm-12.col-md.mb-sm-2.mb-0
+                .text-muted Pageviews
+                strong 78.706 Views (60%)
+                .progress.progress-xs.mt-2
+                  .progress-bar.bg-gradient-warning(role="progressbar" style="width: 60%" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100")
+              .col-sm-12.col-md.mb-sm-2.mb-0
+                .text-muted New Users
+                strong 22.123 Users (80%)
+                .progress.progress-xs.mt-2
+                  .progress-bar.bg-gradient-danger(role="progressbar" style="width: 80%" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100")            
+              .col-sm-12.col-md.mb-sm-2.mb-0
+                .text-muted Bounce Rate
+                strong 40.15%
+                .progress.progress-xs.mt-2
+                  .progress-bar(role="progressbar" style="width: 40%" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100")                

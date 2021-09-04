@@ -1,0 +1,320 @@
+extends ../_layout/default.pug
+
+block scripts
+  script(src="/js/admin/eventMemberManager.js")
+  
+block append styles
+  style.
+    .table td, .table th {
+      text-align: center;   
+    }
+    .pmoney, .wallet {
+      text-align: right;
+    }
+    .pr-4 {
+      padding-right: 4px;
+    }
+    .hide {
+      display: none;
+    }
+    .preview-con {
+      position: fixed;
+      left: 40px;
+      z-index: 9999;
+      max-width: 600px;
+    }
+    .filebox input[type='file'] {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip:rect(0,0,0,0);
+      border: 0;
+    }
+    .filebox {display:inline-block; margin-right: 10px;}
+    .filebox label {
+      display: inline-block;
+      padding: .4em .75em;
+      color: #000;
+      font-size: inherit;
+      line-height: normal;
+      vertical-align: middle;
+      background-color: #fdfdfd;
+      cursor: pointer;
+      border: 1px solid #ebebeb;
+      border-bottom-color: #e2e2e2;
+      border-radius: .25em;
+    }
+
+block view
+  h1
+    | 이벤트 회원관리 
+    |(
+    a(href="/event/member/regist" target="_blank") 가입링크
+    |)
+    
+  hr
+  .fade-in.pre-hide#app
+    .card.user-form
+      .card-body
+        .form-group.row(v-for="form in forms")      
+          label.col-md-3.col-form-label(:for="form.key") {{form.name}}
+          .col-md-9(v-if="form.type=='date'")
+            input.form-control(v-on:change="update" :id="form.key" type="date" :name="form.key" :placeholder="form.placeholder?form.placeholder:''" :value="form.value")
+            span.help-block(v-if="form.help") {{form.help}}
+          .col-md-9(v-if="form.type=='text'")
+            input.form-control(v-on:change="update" :id="form.key" type="text" :name="form.key" :placeholder="form.placeholder?form.placeholder:''" :value="form.value")
+            span.help-block(v-if="form.help") {{form.help}}
+          .col-md-9(v-if="form.type=='number'")
+            .input-group
+              .input-group-prepend(v-if="form.prepend")
+                span.input-group-text(v-html="form.prepend")
+              input.form-control(v-on:change="update" :id="form.key" type="number" :name="form.key" :placeholder="form.placeholder?form.placeholder:''" :value="form.value")
+              .input-group-append(v-if="form.append")
+                span.input-group-text(v-html="form.append")
+            span.help-block(v-if="form.help") {{form.help}}
+          .col-md-9(v-else-if="form.type=='select'")
+            select.form-control(v-on:change="update" :id="form.key" :name="form.key")          
+              option(v-for="opt in form.list" :value="opt.value" :selected="opt.value == form.value" v-html="opt.name")
+            span.help-block(v-if="form.help") {{form.help}}
+          .col-md-9.col-form-label(v-else-if="form.type=='radio'")
+            .form-check(v-for="opt in form.list")
+              input.form-check-input(v-on:change="update" :id="form.key+'_'+opt.value" type="radio" :checked="opt.value == form.value" :value="opt.value" :name="form.key")
+              label.form-check-label(:for="form.key+'_'+opt.value") {{opt.name}}
+          .col-md-9.col-form-label(v-else-if="form.type=='checkbox'")
+            .form-check.checkbox(v-for="opt in form.list")
+              input.form-check-input(v-on:change="update" :id="form.key+'_'+opt.value" type="checkbox" :checked="form.value[opt.value]")
+              label.form-check-label(:for="form.key+'_'+opt.value") {{opt.name}}
+        .form-group.row(v-for="i in [0,1,2]")
+          label.col-md-3.col-form-label {{filename[i]}}
+          .col-md-9
+            .input-group
+              input.form-control(:id="'form-picture-label'+(i+1)" type="text" readOnly :value="userFiles[i]?userFiles[i].originalname:''" v-on:mouseover="showImage($event, filename[i], userFiles[i]?userFiles[i].tempUrl||userFiles[i].url:'')" v-on:mouseleave="hideImage($event)")
+              .input-group-append
+                .filebox
+                  label(:for="'form-picture'+(i+1)") 파일선택
+                  input.form-control(:id="'form-picture'+(i+1)" type="file" accept="image/*" v-on:change="onFileChange($event, userFiles[i], i)")
+          //- .col-md-9
+            .filebox
+              label(for="form-picture1") 파일선택
+              input.form-control#form-picture1(type="file" accept="image/*")
+              
+        //- .form-group.row
+        //-   label.col-md-3.col-form-label 신분증 뒤
+        //-   .col-md-9
+        //-     .filebox
+        //-       label(for="form-picture2") 파일선택
+        //-       input.form-control#form-picture2(type="file" accept="image/*")
+        //- .form-group.row
+        //-   label.col-md-3.col-form-label 신분증들고 본인사진 (얼굴, 신분증 명확하게)
+        //-   .col-md-9
+        //-     .filebox
+        //-       label(for="form-picture3") 파일선택
+        //-       input.form-control#form-picture3(type="file" accept="image/*")        
+          //- .input-group.mb-4
+          //-   .input-group-prepend
+          //-     span.input-group-text
+          //-       |신분증 앞
+          //-   input.form-control#form-picture1(type="file" accept="image/*")
+          //- .input-group.mb-4
+          //-   .input-group-prepend
+          //-     span.input-group-text
+          //-       |신분증 뒤
+          //-   input.form-control#form-picture2(type="file" accept="image/*")
+          //- .input-group.mb-4
+          //-   .input-group-prepend
+          //-     span.input-group-text
+          //-       |신분증들고 본인사진 (얼굴, 신분증 명확하게)
+          //-   input.form-control#form-picture3(type="file" accept="image/*")
+          //- .col-md-9
+          //-   #image-container
+              
+    .auth-form
+      .form-group.row
+        label.col-md-3.col-form-label 인증링크 입력
+        .col-md-9
+          .input-group
+            //- .input-group-prepend
+              span.input-group-text
+            input.form-control(type="text" placeholder="https://" v-on:change="onUpdateAuthLink($event)" :value="authLink")
+    .pay-form
+      .form-group.row
+        label.col-md-3.col-form-label 문상금액 입력
+        .col-md-9
+          .input-group        
+            input.form-control(type="number" v-on:change="onUpdatePayPrice($event)" :value="payPrice")
+      .form-group.row
+        label.col-md-3.col-form-label 문상코드 입력
+        .col-md-9
+          .input-group
+            input.form-control(type="text" placeholder="0000 0000 0000 0000" v-on:change="onUpdatePayCode($event)" :value="payCode")    
+          
+    .row
+      .col-md
+        ul.nav.nav-tabs
+          li.nav-item
+            a.nav-link(href="#0" v-on:click="reload(0, 0)" :class="tab==0?'active':''") 전체
+          li.nav-item
+            a.nav-link(href="#1" v-on:click="reload(0, 1)" :class="tab==1?'active':''") 승인전
+          li.nav-item
+            a.nav-link(href="#2" v-on:click="reload(0, 2)" :class="tab==2?'active':''") 지급전
+          li.nav-item
+            a.nav-link(href="#3" v-on:click="reload(0, 3)" :class="tab==3?'active':''") 지급완
+          li.nav-item
+            a.nav-link(href="#4" v-on:click="reload(0, 4)" :class="tab==4?'active':''") 휴지통
+        .card
+          .card-header
+            div
+              span 목록 ({{count}})
+              span(style="margin-left:10px")
+                .btn-group
+                  button.btn.btn-sm.btn-primary(type="button" v-on:click="reload")
+                    svg.c-icon.c-icon-lg
+                      use(xlink:href="/vendors/@coreui/icons/sprites/solid.svg#cis-reload")
+                  button.btn.btn-sm.btn-secondary(type="button" v-on:click="resetReload")
+                    |검색조건 초기화
+              span.float-right
+                .form-inline                  
+                  .form-group
+                    .input-group
+                      .input-group-prepend
+                        .input-group-text 이름
+                      input.form-control.search-name(type="text" :value="name?name:''" v-on:change="changeSearchName")
+                  .form-group
+                    .input-group
+                      .input-group-prepend
+                        .input-group-text 가입 이메일
+                      input.form-control.search-email(type="text" :value="email?email:''" v-on:change="changeSearchEmail")
+                  .form-group
+                    .input-group
+                      .input-group-prepend
+                        .input-group-text 추천인 이메일
+                      input.form-control.search-from-email(type="text" :value="fromEmail?fromEmail:''" v-on:change="changeSearchFromEmail")
+                  .form-group
+                    button.btn.btn-primary(type="button" v-on:click="reload(0)") 찾기
+          .card-body.table-responsive
+            table.table.table-sm.table-responsive-sm.table-striped.table-hover.table-bordered
+              thead
+                tr
+                  th #
+                  th 등록번호                  
+                  th 등록일
+                  th IP
+                  th 이름
+                  th 이메일
+                  th 전화번호
+                  th 생년월일
+                  th 추천수
+                  th 추천인
+                  th 신분증-앞
+                  th 신분증-뒤
+                  th 들찍
+                  th(v-if="tab<2") 오픈톡요청
+                  th(v-if="tab<2") 인증요청
+                  template(v-if="tab<3")
+                    th 승인
+                  template(v-if="tab!=1&&tab!=4")
+                    th 지급
+                    th 추천인 지급
+                  th 상세
+                  th(v-if="tab!=4") 휴지통
+                  th(v-else) 복구
+                  th 삭제
+              tbody
+                tr(v-for="user, i in users")
+                  td {{i+1}}
+                  td {{user.number}}
+                  td {{(new Date(user.createdAt)).toLocaleString()}}
+                  td {{user.ip}}
+                  td {{user.name}}
+                  td {{user.email}}
+                  td {{user.phone}}
+                  td {{user.birthday}}
+                  td {{comma(user.rCount)}}
+                  td 
+                    a(v-if="user.recommender" :href="'#'+tab" style="cursor:pointer" v-on:click="reload(0, tab, {email:user.recommender.email})")
+                      |{{user.recommender.name}}
+                  td(v-for="file,i in user.files")
+                    a(v-if="file" :download="'['+user.name+']'+filename[i]+'.'+file.url.split('.').pop()" :href="file.url" v-on:mouseover="showImage($event, '['+user.name+']'+filename[i], file.url)" v-on:mouseleave="hideImage($event)")
+                      svg.c-icon.c-icon-lg(style="pointer-events:none;")
+                        use(xlink:href="/vendors/@coreui/icons/sprites/duotone.svg#cid-cloud-download")
+                  td(v-if="tab<2")
+                    button.btn.btn-sm(:class="user.sentOpentalk?'btn-success':'btn-primary'" v-if="!user.approved" v-on:click="sendMailOpenTalk(user._id)")
+                      |오픈톡요청
+                  td(v-if="tab<2")
+                    button.btn.btn-sm.btn-primary(v-if="!user.approved" v-on:click="requestApproveUser(user._id)")
+                      |인증요청
+                  template(v-if="tab<3")
+                    td(v-if="!user.approved")
+                      button.btn.btn-sm.btn-success(v-on:click="approveUser(user._id)")
+                        |승인
+                    td(v-else)
+                      //- span.pr-4.text-success {{(new Date(user.approvedAt)).toLocaleString()}}
+                      button.btn.btn-sm.btn-danger(v-on:click="cancelApproveUser(user._id)")
+                        |승인취소
+                  template(v-if="tab!=1&&tab!=4")                    
+                    td(v-if="!user.paid")
+                      button.btn.btn-sm.btn-info(v-if="user.approved" v-on:click="payUser(user._id)")
+                        |지급
+                    td(v-else)
+                      //- span.pr-4.text-success {{(new Date(user.paidAt)).toLocaleString()}}
+                      button.btn.btn-sm.btn-danger(v-on:click="cancelPayUser(user._id)")
+                        |지급취소
+                    template(v-if="user.recommender")
+                      td(v-if="!user.recommenderPaid")
+                        button.btn.btn-sm.btn-info(v-if="user.approved" v-on:click="payRecommender(user._id)")
+                          |지급
+                      td(v-else)
+                        //- span.pr-4.text-success {{(new Date(user.paidAt)).toLocaleString()}}
+                        button.btn.btn-sm.btn-danger(v-on:click="cancelPayRecommender(user._id)")
+                          |지급취소
+                    template(v-else)
+                      td
+                  td
+                    button.btn.btn-sm.btn-warning(type="button" v-on:click="openUserModal(user._id)")
+                      |상세
+                  td(v-if="tab!=4")
+                    button.btn.btn-sm.btn-danger(v-on:click="trashUser(user._id)")
+                      |휴지통
+                  td(v-else)
+                    button.btn.btn-sm.btn-warning(v-on:click="restoreUser(user._id)")
+                      |복구
+                  td
+                    button.btn.btn-sm.btn-danger(v-on:click="removeUser(user._id)")
+                      |삭제
+                  //- td(v-if="tab!=4")
+                    .input-group
+                      .input-group-prepend
+                        .input-group-text ${{comma(user.money)}}
+                      input.form-control.money-input.pmoney(type="number" :data-id="user._id" placeholder="0" value="")
+                      .input-group-append
+                        button.btn.btn-sm.btn-primary(type="button" v-on:click="addPmoney(user)")
+                          |추가                  
+                  //- td(v-if="tab>0")
+                    //PC(program) count                
+                    .input-group
+                      .input-group-prepend
+                        span.input-group-text {{user.programs.length}} 개
+                        button.btn.btn-sm.btn-warning(v-on:click="openProgramsModal(user)")
+                          |상세보기
+                      input.form-control.program-count(type="number" :data-id="user._id" :value="user.programCount")                      
+                      .input-group-append
+                        button.btn.btn-sm.btn-primary(type="button" v-on:click="updateProgramCount(user)")
+                          |최대수량설정                                                      
+          nav
+            ul.pagination.justify-content-center(v-if="users.length>0")
+              li.page-item
+                a.page-link(v-if="startPage>0" href="#" aria-label="Previous" v-on:click="reload(startPage-1)")
+                  span(aria-hidden="true") «
+                  span.sr-only Previous
+              li.page-item(v-for="i in pages" :class="curPage==i?'active':''")
+                a.page-link(v-if="curPage==i") {{i+1}}
+                a.page-link(v-else :href="'#'+i" v-on:click="reload(i)") {{i+1}}
+              li.page-item
+                a.page-link(v-if="maxPage>endPage" href="#" aria-label="Next" v-on:click="reload(endPage+1)")
+                  span(aria-hidden="true") »
+                  span.sr-only Next
+      
+      

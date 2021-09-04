@@ -1,0 +1,7 @@
+node_modules
+sessions
+download
+backup_db
+*.log
+package-lock.json
+uploads
